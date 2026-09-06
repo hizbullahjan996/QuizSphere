@@ -1,0 +1,18 @@
+# Never commit secrets or local configuration
+config/env.php
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+*.log
+
+# Composer / vendor (if used later)
+/vendor/
+composer.lock
+
+# Supabase local / edge
+.env
+.env.*
+
+# FastAPI backend virtualenv
+backend/.venv/
