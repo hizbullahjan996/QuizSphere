@@ -6,6 +6,10 @@ config/env.php
 Thumbs.db
 *.log
 
+# Python bytecode / caches
+__pycache__/
+*.pyc
+
 # Composer / vendor (if used later)
 /vendor/
 composer.lock
