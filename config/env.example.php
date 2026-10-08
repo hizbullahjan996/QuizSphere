@@ -36,22 +36,35 @@ define('SUPABASE_RESOLVE', '');
 // define('AUTH_QUOTA_FALLBACK', false);
 
 // ---------------------------------------------------------------------------
-// AI PROVIDERS (Phase 3)
+// AI PROVIDERS (3-Tier Cascade)
+// 1. OpenAI (Primary) -> 2. Gemini (First Fallback) -> 3. Groq (Second Fallback)
 // Keys are used ONLY server-side by the AI service layer. They are NEVER
 // sent to or embedded in the frontend JavaScript.
 // ---------------------------------------------------------------------------
 
-// Google Gemini API key.
+// Configurable provider priority (default: openai -> gemini -> groq)
+define('AI_PRIMARY_PROVIDER', 'openai');
+define('AI_FALLBACK_PROVIDER', 'gemini');
+define('AI_SECOND_FALLBACK', 'groq');
+
+// 1. OpenAI (Primary)
+define('OPENAI_API_KEY', '');
+define('OPENAI_MODEL', 'gpt-4o-mini');
+define('OPENAI_TIMEOUT', 30.0);
+
+// 2. Google Gemini (First Fallback)
 define('GEMINI_API_KEY', '');
+define('GEMINI_MODEL', 'gemini-2.5-flash');
+define('GEMINI_TIMEOUT', 30.0);
 
-// Optional Gemini model (a model that supports structured/generative output).
-define('GEMINI_MODEL', 'gemini-3.6-flash');
-
-// Groq API key (fallback provider).
+// 3. Groq (Second Fallback)
 define('GROQ_API_KEY', '');
-
-// Optional Groq model.
 define('GROQ_MODEL', 'openai/gpt-oss-20b');
+define('GROQ_TIMEOUT', 30.0);
 
 // ---- Optional SMTP-less password-reset redirect (set to your base URL) ----
 define('APP_HOST_URL', BASE_URL ?? '');
+
+// Optional: FastAPI backend URL (defaults to http://localhost:8001 if omitted)
+// define('API_URL', 'http://localhost:8081');
+

@@ -22,7 +22,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-API_URL = os.environ.get("TEST_API_URL", "http://127.0.0.1:8001")
+API_URL = os.environ.get("TEST_API_URL", "http://127.0.0.1:8081")
 
 _TOKEN_PATHS = [
     Path(os.environ.get("TEST_TOKEN", "C:\\Users\\ABDULL~1\\AppData\\Local\\Temp\\opencode\\test_token.txt")),

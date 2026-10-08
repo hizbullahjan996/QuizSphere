@@ -29,7 +29,8 @@ class GeminiProvider implements AiProviderInterface
             throw new AiProviderException('Gemini is not configured.', false);
         }
 
-        $model = defined('GEMINI_MODEL') ? GEMINI_MODEL : 'gemini-3.6-flash';
+        $model = defined('GEMINI_MODEL') && GEMINI_MODEL !== '' ? GEMINI_MODEL : 'gemini-2.5-flash';
+        $timeout = defined('GEMINI_TIMEOUT') ? (float) GEMINI_TIMEOUT : 30.0;
         $url = 'https://generativelanguage.googleapis.com/v1beta/models/'
              . rawurlencode($model)
              . ':generateContent?key=' . GEMINI_API_KEY;
@@ -51,7 +52,7 @@ class GeminiProvider implements AiProviderInterface
         ];
 
         try {
-            $res = AiHttp::postJson($url, ['Content-Type: application/json'], $payload, 45.0);
+            $res = AiHttp::postJson($url, ['Content-Type: application/json'], $payload, $timeout);
         } catch (AiProviderException $e) {
             throw new AiProviderException('AI service is temporarily unavailable.', true, 0, $e);
         }
@@ -105,18 +106,33 @@ class GeminiProvider implements AiProviderInterface
 
         if (!is_array($payload)) {
             // Try to salvage a JSON array embedded in prose.
-            if (preg_match('/\[.*\]/s', $text, $m)) {
+            if (preg_match('/\[\s*\{.*\}\s*\]/s', $text, $m)) {
+                $payload = json_decode($m[0], true);
+            } elseif (preg_match('/\{[\s\S]*\}/s', $text, $m)) {
                 $payload = json_decode($m[0], true);
             }
         }
 
-        if (!is_array($payload)) {
-            AppLogger::error('Gemini returned unparseable JSON', [
-                'preview' => AppLogger::sanitize(mb_substr($text, 0, 500)),
-            ], 'ai');
-            throw new AiProviderException('The AI returned an invalid response. Please try again.', true);
+        if (is_array($payload)) {
+            if (array_is_list($payload)) {
+                return $payload;
+            }
+            if (isset($payload['questions']) && is_array($payload['questions'])) {
+                return $payload['questions'];
+            }
+            if (isset($payload['quiz']) && is_array($payload['quiz'])) {
+                return $payload['quiz'];
+            }
+            foreach ($payload as $val) {
+                if (is_array($val) && array_is_list($val)) {
+                    return $val;
+                }
+            }
         }
 
-        return $payload;
+        AppLogger::error('Gemini returned unparseable JSON', [
+            'preview' => AppLogger::sanitize(mb_substr($text, 0, 500)),
+        ], 'ai');
+        throw new AiProviderException('The AI returned an invalid response. Please try again.', true);
     }
 }

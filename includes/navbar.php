@@ -10,10 +10,13 @@ function nav_link(string $key, string $href, string $label): string
     $active = $active_page === $key ? ' active' : '';
     return '<a class="nav-link' . $active . '" href="' . e($href) . '">' . e($label) . '</a>';
 }
+
+$navIsLoggedIn = !empty($_SESSION['user'] ?? null);
+$navLogoHref = $navIsLoggedIn ? url('/pages/dashboard.php') : url('/index.php');
 ?>
 <nav class="navbar navbar-expand-lg navbar-quiz sticky-top">
   <div class="container">
-    <a class="navbar-brand-app" href="<?php echo url('/index.php'); ?>">
+    <a class="navbar-brand-app" href="<?php echo e($navLogoHref); ?>">
       <img class="brand-logo" src="<?php echo url('/assets/images/logo.png'); ?>" alt="QuizSphere logo">
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -27,8 +30,12 @@ function nav_link(string $key, string $href, string $label): string
         <li class="nav-item"><?php echo nav_link('about', url('/index.php#about'), 'About'); ?></li>
       </ul>
       <div class="d-flex align-items-center gap-2">
-        <a href="<?php echo url('/login.php'); ?>" class="btn btn-ghost">Login</a>
-        <a href="<?php echo url('/register.php'); ?>" class="btn btn-brand">Get Started</a>
+        <?php if ($navIsLoggedIn): ?>
+          <a href="<?php echo url('/pages/dashboard.php'); ?>" class="btn btn-brand">Dashboard <i class="bi bi-arrow-right ms-1"></i></a>
+        <?php else: ?>
+          <a href="<?php echo url('/login.php'); ?>" class="btn btn-ghost">Login</a>
+          <a href="<?php echo url('/register.php'); ?>" class="btn btn-brand">Get Started</a>
+        <?php endif; ?>
       </div>
     </div>
   </div>

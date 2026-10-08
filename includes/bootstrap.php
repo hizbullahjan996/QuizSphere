@@ -24,6 +24,7 @@ require_once __DIR__ . '/AI/AiProviderException.php';
 require_once __DIR__ . '/AI/AiHttp.php';
 require_once __DIR__ . '/AI/AiPromptBuilder.php';
 require_once __DIR__ . '/AI/AiResponseValidator.php';
+require_once __DIR__ . '/AI/OpenAIProvider.php';
 require_once __DIR__ . '/AI/GeminiProvider.php';
 require_once __DIR__ . '/AI/GroqProvider.php';
 require_once __DIR__ . '/AI/AiService.php';

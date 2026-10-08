@@ -60,9 +60,7 @@ class SupabaseClient
 
     public function __destruct()
     {
-        if ($this->curlHandle !== null) {
-            curl_close($this->curlHandle);
-        }
+        $this->curlHandle = null;
     }
 
     /** Get a reset, reusable curl handle (keep-alive across calls). */

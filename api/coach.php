@@ -32,10 +32,10 @@ if (!$token) {
 $input = Security::readJsonInput();
 api_require_csrf($input);
 
-if (!ai_configured()) {
+if (!defined('GEMINI_API_KEY') || GEMINI_API_KEY === '') {
     Security::json([
         'error'   => 'ai_not_configured',
-        'message' => 'The AI Learning Coach is not configured yet. Please add your AI API keys in config/env.php.',
+        'message' => 'The AI Learning Coach requires Gemini. Please add your GEMINI_API_KEY in config/env.php.',
     ], 503);
 }
 
@@ -53,24 +53,23 @@ if ($message === '' || mb_strlen($message) > 1000) {
 
 // Normalise optional conversation history (only recent, safe turns).
 $history = [];
+$maxHistory = defined('AI_COACH_MAX_HISTORY') ? (int) AI_COACH_MAX_HISTORY : 6;
 if (isset($input['history']) && is_array($input['history'])) {
-    foreach (array_slice($input['history'], -6) as $turn) {
+    foreach (array_slice($input['history'], -$maxHistory) as $turn) {
         $role = ($turn['role'] ?? '') === 'coach' ? 'coach' : 'user';
         $content = trim((string) ($turn['content'] ?? ''));
         if ($content !== '') {
-            $history[] = ['role' => $role, 'content' => mb_substr($content, 0, 1000)];
+            $history[] = ['role' => $role, 'content' => mb_substr($content, 0, 800)];
         }
     }
 }
 
-// Assemble the grounding context from real learner data.
+// Assemble the grounding context via fast lightweight queries and session caching.
 try {
-    $analytics = (new PerformanceAnalytics($repo))->build($userId, $token);
+    $context = LearningCoach::getGroundingContext($repo, $auth, $userId, $token);
 } catch (Throwable $e) {
-    $analytics = []; // fall back to minimal context rather than failing
+    $context = "Recent attempts: 0\nAverage score: 0%\nLevel: 1\nXP: 0\nWeak concepts: none recorded\nDeveloping concepts: none recorded\nStrong concepts: none recorded\nRecommended practice: General";
 }
-$profile = $auth->profile() ?: [];
-$context = LearningCoach::buildContext($analytics, $profile);
 
 $coach = new LearningCoach();
 try {

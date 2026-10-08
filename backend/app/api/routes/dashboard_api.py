@@ -10,7 +10,7 @@ from app.core.errors import APIError
 from app.repositories.profile_repository import ProfileRepository
 from app.repositories.quiz_repository import QuizRepository
 from app.services.gamification import GamificationService, level_info
-from app.services.learning_coach import LearningCoach, build_context
+from app.services.learning_coach import LearningCoach, build_context, build_lightweight_context
 from app.services.performance_analytics import PerformanceAnalytics
 from app.utils.rate_limiter import RateLimiter
 from app.utils.supabase import get_supabase
@@ -155,11 +155,18 @@ async def coach(request: Request) -> dict:
     db = get_supabase()
     repo = QuizRepository(db)
     try:
-        analytics = await PerformanceAnalytics(repo).build(session.user["id"], token)
+        concept_rows = await repo.list_concept_performance(session.user["id"], token)
     except Exception:
-        analytics = {}
-    profile = await ProfileRepository(db).get(session.user["id"], token) or {}
-    context = build_context(analytics, profile)
+        concept_rows = []
+    try:
+        recent_attempts = await repo.list_user_attempts(session.user["id"], token, limit=5)
+    except Exception:
+        recent_attempts = []
+    try:
+        profile = (await ProfileRepository(db).get(session.user["id"], token)) or {}
+    except Exception:
+        profile = {}
+    context = build_lightweight_context(concept_rows, recent_attempts, profile)
 
     from app.services.ai_service import AiProviderError
 

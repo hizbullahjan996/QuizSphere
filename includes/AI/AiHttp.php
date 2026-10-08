@@ -37,7 +37,7 @@ class AiHttp
             $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
             $errno = curl_errno($ch);
             $error = curl_error($ch);
-            curl_close($ch);
+            unset($ch);
 
             if ($body === false) {
                 throw new AiProviderException(

@@ -31,17 +31,40 @@ require __DIR__ . '/../includes/head.php';
 
     <div class="topbar">
       <div>
-        <h1 class="h4 mb-1"><i class="bi bi-award me-2"></i>My Certificates</h1>
-        <p class="text-muted-ink mb-0">Awards for scores of 80% or higher on a completed quiz.</p>
+        <div class="d-inline-flex align-items-center gap-2 badge-soft text-brand mb-2">
+          <i class="bi bi-award-fill"></i> Verified Credentials
+        </div>
+        <h1 class="h4 fw-bold text-ink-900 mb-1">My Certificates</h1>
+        <p class="text-muted-ink mb-0">Official certificates of achievement awarded automatically for scores of 80% or higher.</p>
+      </div>
+      <a href="<?php echo url('/pages/generate.php'); ?>" class="btn btn-brand d-none d-sm-inline-flex">
+        <i class="bi bi-plus-lg me-2"></i>Earn New Certificate
+      </a>
+    </div>
+
+    <!-- Certificate Guidelines Card -->
+    <div class="card p-4 mb-4" style="background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);">
+      <div class="d-flex align-items-center gap-3">
+        <div class="stat-icon-wrap stat-icon-indigo" style="width: 3.2rem; height: 3.2rem; font-size: 1.35rem;">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <div class="flex-grow-1">
+          <div class="fw-semibold text-ink-900">Cryptographically verifiable certificates</div>
+          <div class="small text-muted-ink">Every certificate features a unique identifier and scannable QR code for public verification.</div>
+        </div>
       </div>
     </div>
 
     <div class="card p-4">
       <div class="form-alert mt-0 mb-3" id="certificates-error" hidden></div>
       <div id="certificates-list">
-        <div class="text-center text-muted-ink py-4"><i class="bi bi-hourglass-split me-1"></i>Loading your certificates...</div>
+        <div class="text-center text-muted-ink py-5">
+          <div class="spinner-border spinner-border-sm text-brand me-2" role="status"></div>
+          Loading your earned certificates...
+        </div>
       </div>
     </div>
+
   </main>
 </div>
 

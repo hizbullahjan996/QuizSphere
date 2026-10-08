@@ -61,12 +61,11 @@ class GeminiProvider:
         if not settings.GEMINI_API_KEY:
             raise AiProviderError("Gemini is not configured.", False)
 
-        url = (
-            "https://generativelanguage.googleapis.com/v1beta/models/"
-            + settings.GEMINI_MODEL
-            + ":generateContent?key="
-            + settings.GEMINI_API_KEY
-        )
+        models = [settings.GEMINI_MODEL]
+        for fallback in ("gemini-2.5-flash", "gemini-3.6-flash"):
+            if fallback not in models:
+                models.append(fallback)
+
         prompt = ai_prompt_builder.build_prompt(
             request["topic"],
             request["difficulty"],
@@ -81,33 +80,48 @@ class GeminiProvider:
                 "responseMimeType": "application/json",
             },
         }
-        try:
-            resp = await self._http.post(
-                url, json=payload, headers={"Content-Type": "application/json"}, timeout=timeout
-            )
-        except httpx.HTTPError as exc:
-            raise AiProviderError("AI service is temporarily unavailable.", True, timed_out=True) from exc
 
-        if not (200 <= resp.status_code < 300):
-            retryable = resp.status_code in _RETRYABLE
-            logger.error("Gemini request failed: %s %.300s", resp.status_code, resp.text)
-            raise AiProviderError(
-                "The AI quiz generator is busy right now. Please try again shortly.", retryable
+        last_exc: Exception | None = None
+        for model in models:
+            url = (
+                "https://generativelanguage.googleapis.com/v1beta/models/"
+                + model
+                + ":generateContent?key="
+                + settings.GEMINI_API_KEY
             )
+            try:
+                resp = await self._http.post(
+                    url, json=payload, headers={"Content-Type": "application/json"}, timeout=timeout
+                )
+            except httpx.HTTPError as exc:
+                last_exc = exc
+                continue
 
-        body = resp.json()
-        text = None
-        for candidate in body.get("candidates") or []:
-            for part in (candidate.get("content") or {}).get("parts") or []:
-                if part.get("text"):
-                    text = part["text"]
+            if not (200 <= resp.status_code < 300):
+                retryable = resp.status_code in _RETRYABLE
+                logger.error("Gemini request failed for model %s: %s %.300s", model, resp.status_code, resp.text)
+                last_exc = AiProviderError(
+                    "The AI quiz generator is busy right now. Please try again shortly.", retryable
+                )
+                continue
+
+            body = resp.json()
+            text = None
+            for candidate in body.get("candidates") or []:
+                for part in (candidate.get("content") or {}).get("parts") or []:
+                    if part.get("text"):
+                        text = part["text"]
+                        break
+                if text:
                     break
             if text:
-                break
-        if not text:
-            logger.error("Gemini returned no usable text")
-            raise AiProviderError("The AI returned an empty response. Please retry.", True)
-        return _parse_questions(text)
+                return _parse_questions(text)
+
+        if last_exc:
+            if isinstance(last_exc, AiProviderError):
+                raise last_exc
+            raise AiProviderError("AI service is temporarily unavailable.", True, timed_out=True) from last_exc
+        raise AiProviderError("The AI returned an empty response. Please retry.", True)
 
 
 class GroqProvider:

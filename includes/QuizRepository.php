@@ -154,6 +154,21 @@ class QuizRepository
     }
 
     /**
+     * Fetch recent attempt scores (lightweight for AI Coach context).
+     *
+     * @return array[]
+     */
+    public function listRecentAttemptScores(string $userId, ?string $token = null, int $limit = 5): array
+    {
+        return $this->db->select('quiz_attempts', [
+            'columns' => 'percent, score, total',
+            'filter'  => ['user_id' => "eq.$userId"],
+            'order'   => 'completed_at.desc',
+            'limit'   => $limit,
+        ], $token);
+    }
+
+    /**
      * List the user's accumulated concept-performance rows (mastery per concept).
      */
     public function listConceptPerformance(string $userId, ?string $token = null): array

@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.1.0"
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = "INFO"
-    CORS_ORIGINS: str = "http://localhost:8000,http://127.0.0.1:8000"
+    CORS_ORIGINS: str = "http://localhost:8000,http://127.0.0.1:8000,http://localhost:8080,http://127.0.0.1:8080"
 
     @property
     def cors_origins_list(self) -> list[str]:
@@ -43,10 +43,21 @@ class Settings(BaseSettings):
     SUPABASE_SCHEMA: str = "public"
 
     # AI providers (server-side only)
+    OPENAI_API_KEY: str = ""
+    OPENAI_MODEL: str = "gpt-4o-mini"
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-3.6-flash"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "openai/gpt-oss-20b"
+
+    # AI Coach (Strictly Gemini only)
+    AI_COACH_MODEL: str = "gemini-2.5-flash"
+    AI_COACH_FALLBACK_MODEL: str = "gemini-flash-latest"
+    AI_COACH_TIMEOUT: float = 15.0
+    AI_COACH_MAX_OUTPUT_TOKENS: int = 600
+    AI_COACH_MAX_HISTORY: int = 6
+    AI_COACH_TEMPERATURE: float = 0.5
+    AI_COACH_CONTEXT_TTL: int = 180
 
     # Sessions / security
     SESSION_SECRET: str = ""
@@ -76,7 +87,7 @@ class Settings(BaseSettings):
 
     @property
     def ai_configured(self) -> bool:
-        return bool(self.GEMINI_API_KEY) or bool(self.GROQ_API_KEY)
+        return bool(self.OPENAI_API_KEY) or bool(self.GEMINI_API_KEY) or bool(self.GROQ_API_KEY)
 
     @property
     def secret_values(self) -> list[str]:
@@ -86,6 +97,7 @@ class Settings(BaseSettings):
             for v in (
                 self.SUPABASE_PUBLISHABLE_KEY,
                 self.SUPABASE_SECRET_KEY,
+                self.OPENAI_API_KEY,
                 self.GEMINI_API_KEY,
                 self.GROQ_API_KEY,
                 self.SESSION_SECRET,

@@ -30,47 +30,68 @@ require __DIR__ . '/../includes/head.php';
 
     <div class="topbar">
       <div>
-        <h1 class="h4 mb-1"><i class="bi bi-trophy me-2"></i>Leaderboard</h1>
-        <p class="text-muted-ink mb-0">Top learners by XP — stay consistent to climb the ranks.</p>
+        <div class="d-inline-flex align-items-center gap-2 badge-soft text-warning mb-2">
+          <i class="bi bi-trophy-fill"></i> Global Rankings
+        </div>
+        <h1 class="h4 fw-bold text-ink-900 mb-1">Learner Leaderboard</h1>
+        <p class="text-muted-ink mb-0">Celebrate top performers by total XP. Complete quizzes and maintain streaks to ascend.</p>
       </div>
-      <a href="<?php echo url('/pages/generate.php'); ?>" class="btn btn-brand d-none d-sm-inline-flex"><i class="bi bi-plus-lg me-2"></i>Earn XP</a>
+      <a href="<?php echo url('/pages/generate.php'); ?>" class="btn btn-brand d-none d-sm-inline-flex">
+        <i class="bi bi-plus-lg me-2"></i>Earn XP Now
+      </a>
     </div>
 
-    <!-- My rank -->
-    <div class="card p-4 mb-4" id="leaderboard-me">
+    <!-- Current User's Rank Card -->
+    <div class="card p-4 mb-4 border-brand-subtle" id="leaderboard-me" style="background: linear-gradient(135deg, var(--surface) 0%, var(--brand-50) 100%);">
       <div class="d-flex align-items-center gap-3">
-        <div class="icon-badge badge-podium"><i class="bi bi-person"></i></div>
+        <div class="icon-badge badge-podium" style="width: 3.2rem; height: 3.2rem; font-size: 1.35rem;">
+          <i class="bi bi-person-fill"></i>
+        </div>
         <div class="flex-grow-1">
-          <div class="fw-semibold">Your rank</div>
-          <div class="small text-muted-ink">Loading your position...</div>
+          <div class="fw-semibold text-ink-900 fs-5">Your rank</div>
+          <div class="small text-muted-ink">Loading your ranking position...</div>
+        </div>
+        <div class="d-none d-md-block text-end">
+          <span class="badge-soft text-brand fw-semibold">Real-time Standing</span>
         </div>
       </div>
     </div>
 
-    <!-- Top list -->
+    <!-- Top Learners Table Card -->
     <div class="card p-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">Top Learners</h5>
-        <span class="badge-soft">By XP</span>
+        <div>
+          <h5 class="mb-1 fw-bold text-ink-900"><i class="bi bi-stars text-warning me-2"></i>Top Learners</h5>
+          <p class="text-muted-ink small mb-0">Ranked by total earned experience points (XP)</p>
+        </div>
+        <span class="badge-soft">All-Time XP</span>
       </div>
+
       <div class="form-alert mt-3" id="leaderboard-error" hidden></div>
+
       <div class="table-responsive">
         <table class="table align-middle mb-0">
           <thead>
             <tr class="text-muted-ink small">
-              <th style="width:70px;">Rank</th>
+              <th style="width: 80px;">Rank</th>
               <th>Student</th>
               <th class="text-end">Level</th>
               <th class="text-end">Quizzes</th>
-              <th class="text-end">XP</th>
+              <th class="text-end">Total XP</th>
             </tr>
           </thead>
           <tbody id="leaderboard-body">
-            <tr><td colspan="5" class="text-center text-muted-ink py-4"><i class="bi bi-hourglass-split me-1"></i>Loading leaderboard...</td></tr>
+            <tr>
+              <td colspan="5" class="text-center text-muted-ink py-5">
+                <div class="spinner-border spinner-border-sm text-brand me-2" role="status"></div>
+                Loading leaderboard rankings...
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
     </div>
+
   </main>
 </div>
 

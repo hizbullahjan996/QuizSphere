@@ -77,6 +77,9 @@ try {
     Security::json(['error' => 'db_error', 'message' => 'Could not save your results. Please try again.'], 500);
 }
 
+// Invalidate coach context cache so the next coach query immediately reflects this attempt.
+unset($_SESSION['coach_context_cache']);
+
 // Gather per-question correctness + explanations for the results review.
 $attemptId = $result['attempt']['id'] ?? null;
 $detail = $repo->loadFullDetailForReview($userId, $result, $token) ?? [];

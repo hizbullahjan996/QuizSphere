@@ -298,6 +298,51 @@
   }
 
   /* ----------------------------------------------------------------------
+     0b. Mobile slide-out navigation drawer
+     ---------------------------------------------------------------------- */
+  function initSidebarDrawer() {
+    const toggle = byId('mobileMenuToggle');
+    const closeBtn = byId('sidebarCloseBtn');
+    const sidebar = byId('appSidebar');
+    const backdrop = byId('sidebarBackdrop');
+    if (!sidebar) return;
+
+    function openDrawer() {
+      sidebar.classList.add('show');
+      if (backdrop) backdrop.classList.add('show');
+      document.body.classList.add('drawer-open');
+    }
+
+    function closeDrawer() {
+      sidebar.classList.remove('show');
+      if (backdrop) backdrop.classList.remove('show');
+      document.body.classList.remove('drawer-open');
+    }
+
+    on(toggle, 'click', (e) => {
+      e.stopPropagation();
+      openDrawer();
+    });
+
+    on(closeBtn, 'click', closeDrawer);
+    on(backdrop, 'click', closeDrawer);
+
+    // Close when clicking a nav link on mobile
+    sidebar.querySelectorAll('.sidebar-link').forEach((link) => {
+      on(link, 'click', () => {
+        if (window.innerWidth < 992) closeDrawer();
+      });
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && sidebar.classList.contains('show')) {
+        closeDrawer();
+      }
+    });
+  }
+
+  /* ----------------------------------------------------------------------
      1. Smooth scroll for same-page anchor links
      ---------------------------------------------------------------------- */
   function initSmoothScroll() {
@@ -1201,6 +1246,7 @@
     const messagesEl = byId('coach-messages');
     if (!form || !input || !messagesEl) return;
     let history = [];
+    let isSubmitting = false;
 
     if (note) note.textContent = 'Advice is generated from your quiz performance only — the coach never invents facts about you.';
 
@@ -1215,36 +1261,78 @@
       return { row, bubble: row.querySelector('.coach-bubble') };
     };
 
+    const chips = app.querySelectorAll('[data-suggestion]');
+
     const sendMsg = async (text) => {
+      if (isSubmitting) return;
       const clean = (text || '').trim();
       if (!clean) { input.focus(); return; }
-      addBubble('user', clean);
-      input.value = '';
+
+      isSubmitting = true;
       input.disabled = true;
       send.disabled = true;
+      chips.forEach((c) => {
+        c.setAttribute('disabled', 'true');
+        c.style.pointerEvents = 'none';
+        c.style.opacity = '0.6';
+      });
+
+      addBubble('user', clean);
+      input.value = '';
       const loading = addBubble('coach', '', true);
 
       try {
-        const { ok, data } = await apiFetch('api/coach.php', 'POST', { message: clean, history });
-        loading.bubble.textContent = (data && data.message) || 'Sorry, something went wrong. Please try again.';
-        loading.row.classList.remove('coach-loading');
-        if (ok && data && data.message) {
+        const recentHistory = history.slice(-6);
+        let resp = null;
+        try {
+          resp = await apiFetch('api/coach.php', 'POST', { message: clean, history: recentHistory });
+        } catch (netErr) {
+          // Direct fallback to local PHP endpoint if FastAPI is unreachable
+          const phpUrl = (window.APP_URL || '/').replace(/\/+$/, '') + '/api/coach.php';
+          const csrf = csrfToken();
+          const fallbackRes = await fetch(phpUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-Token': csrf },
+            credentials: 'same-origin',
+            body: JSON.stringify({ message: clean, history: recentHistory, _csrf: csrf })
+          });
+          let fbData = {};
+          try { fbData = await fallbackRes.json(); } catch (_) {}
+          resp = { ok: fallbackRes.ok, status: fallbackRes.status, data: fbData };
+        }
+
+        const data = resp && resp.data ? resp.data : {};
+        if (resp && resp.ok && data.message) {
+          loading.bubble.textContent = data.message;
+          loading.row.classList.remove('coach-loading');
           history.push({ role: 'user', content: clean });
           history.push({ role: 'coach', content: data.message });
+          if (history.length > 8) {
+            history = history.slice(-8);
+          }
+        } else {
+          loading.bubble.textContent = (data && data.message) || 'The AI coach is temporarily unavailable. Please try again in a moment.';
+          loading.row.classList.remove('coach-loading');
         }
         scroll();
       } catch (err) {
         loading.bubble.textContent = 'Network error. Please check your connection and try again.';
         loading.row.classList.remove('coach-loading');
       } finally {
+        isSubmitting = false;
         input.disabled = false;
         send.disabled = false;
+        chips.forEach((c) => {
+          c.removeAttribute('disabled');
+          c.style.pointerEvents = '';
+          c.style.opacity = '';
+        });
         input.focus();
       }
     };
 
     on(form, 'submit', (e) => { e.preventDefault(); sendMsg(input.value); });
-    app.querySelectorAll('[data-suggestion]').forEach((chip) => {
+    chips.forEach((chip) => {
       on(chip, 'click', () => sendMsg(chip.getAttribute('data-suggestion')));
     });
     input.focus();
@@ -1267,6 +1355,12 @@
         }
         if (byId('leaderboard-rank-hint') && p.rank) {
           byId('leaderboard-rank-hint').textContent = '#' + p.rank + ' overall';
+        }
+        if (byId('sidebarUserLevel') && p.level) {
+          byId('sidebarUserLevel').textContent = 'Level ' + p.level;
+        }
+        if (byId('sidebarUserXp') && p.xp !== undefined) {
+          byId('sidebarUserXp').textContent = Number(p.xp).toLocaleString() + ' XP';
         }
         renderAchievements((data.achievements || {}));
       }
@@ -1396,17 +1490,22 @@
         return;
       }
       listEl.innerHTML = '<div class="row g-3">' + list.map((c) => {
-        return '<div class="col-md-6"><div class="card p-4 h-100">' +
+        const score = Math.round(c.score || 0);
+        const earnedDate = c.earned_at ? new Date(c.earned_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+        return '<div class="col-md-6"><div class="card p-4 h-100 shadow-xs border-1 transition-all" style="border-left: 4px solid #c5a059 !important;">' +
           '<div class="d-flex align-items-center gap-3">' +
-            '<div class="icon-badge"><i class="bi bi-award"></i></div>' +
+            '<div class="icon-badge badge-brand" style="background: rgba(197, 160, 89, 0.15); color: #b48220;"><i class="bi bi-award-fill fs-5"></i></div>' +
             '<div class="flex-grow-1">' +
-              '<div class="fw-semibold">' + escapeHtml(c.quiz_title || 'Certificate of Achievement') + '</div>' +
-              '<div class="small text-muted-ink">Score ' + Math.round(c.score || 0) + '% · ' + new Date(c.earned_at).toLocaleDateString() + '</div>' +
+              '<div class="fw-bold text-ink-900">' + escapeHtml(c.quiz_title || 'Certificate of Achievement') + '</div>' +
+              '<div class="small text-muted-ink d-flex align-items-center gap-2 mt-1">' +
+                '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check2-circle me-1"></i>Score ' + score + '%</span>' +
+                '<span>· ' + earnedDate + '</span>' +
+              '</div>' +
             '</div>' +
           '</div>' +
-          '<div class="d-flex gap-2 mt-3">' +
-            '<a class="btn btn-sm btn-brand" href="' + appUrl('pages/view-certificate.php?id=' + encodeURIComponent(c.id)) + '"><i class="bi bi-eye me-1"></i>View</a>' +
-            '<a class="btn btn-sm btn-outline-brand" href="' + appUrl('verify-certificate.php?id=' + encodeURIComponent(c.id)) + '" target="_blank" rel="noopener"><i class="bi bi-patch-check me-1"></i>Verify</a>' +
+          '<div class="d-flex gap-2 mt-3 pt-2 border-top">' +
+            '<a class="btn btn-sm btn-brand flex-grow-1" href="' + appUrl('pages/view-certificate.php?id=' + encodeURIComponent(c.id)) + '"><i class="bi bi-award me-1"></i>View Certificate</a>' +
+            '<a class="btn btn-sm btn-outline-brand" href="' + appUrl('verify-certificate.php?id=' + encodeURIComponent(c.id)) + '" target="_blank" rel="noopener" title="Verify on public ledger"><i class="bi bi-patch-check me-1"></i>Verify</a>' +
           '</div>' +
         '</div></div>';
       }).join('') + '</div>';
@@ -1431,22 +1530,39 @@
       const loadingEl = byId('cert-loading');
       const panel = byId('cert-panel');
       if (!ok || !data || !data.certificate) {
-        loadingEl.classList.add('d-none');
+        if (loadingEl) loadingEl.classList.add('d-none');
         if (errEl) { errEl.hidden = false; errEl.textContent = (data && data.message) || 'Certificate not found.'; }
         return;
       }
       const c = data.certificate;
       if (byId('cert-name')) byId('cert-name').textContent = c.student_name || 'Learner';
       if (byId('cert-quiz')) byId('cert-quiz').textContent = c.quiz_title || 'Certificate of Achievement';
-      if (byId('cert-score')) byId('cert-score').textContent = Math.round(c.score || 0) + '%';
-      if (byId('cert-date')) byId('cert-date').textContent = new Date(c.earned_at).toLocaleDateString();
+      
+      const scoreVal = Math.round(c.score || 0);
+      if (byId('cert-score')) byId('cert-score').textContent = scoreVal + '%';
+
+      // Academic level badge
+      let levelText = 'ADVANCED MASTERY';
+      if (scoreVal >= 95) levelText = 'HIGHEST HONORS';
+      else if (scoreVal >= 90) levelText = 'DISTINCTION';
+      else if (scoreVal >= 80) levelText = 'VERIFIED PROFICIENCY';
+      if (byId('cert-level')) byId('cert-level').textContent = levelText;
+
+      // Clean formatted date
+      const earnedDate = c.earned_at ? new Date(c.earned_at) : new Date();
+      const formattedDate = earnedDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      if (byId('cert-date')) byId('cert-date').textContent = formattedDate;
       if (byId('cert-id')) byId('cert-id').textContent = c.id;
 
       renderQR(c.id);
       wireDownload(c);
 
-      loadingEl.classList.add('d-none');
-      panel.classList.remove('d-none');
+      if (loadingEl) loadingEl.classList.add('d-none');
+      if (panel) panel.classList.remove('d-none');
     }
 
     function renderQR(id) {
@@ -1454,34 +1570,290 @@
       if (!qrEl || typeof QRCode === 'undefined') return;
       const url = appUrl('verify-certificate.php?id=' + encodeURIComponent(id));
       qrEl.innerHTML = '';
-      try { new QRCode(qrEl, { text: url, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.M }); }
-      catch (e) { /* QR unavailable */ }
+      try {
+        new QRCode(qrEl, {
+          text: url,
+          width: 96,
+          height: 96,
+          colorDark: '#0f172a',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch (e) {
+        /* QR unavailable */
+      }
     }
 
     function wireDownload(c) {
       const btn = byId('cert-download');
-      if (!btn || typeof window.jspdf === 'undefined') return;
-      btn.addEventListener('click', function () {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-        const w = 297, h = 210;
-        doc.setFillColor(245, 247, 255); doc.rect(0, 0, w, h, 'F');
-        doc.setDrawColor(37, 82, 235); doc.setLineWidth(1.2); doc.rect(8, 8, w - 16, h - 16);
-        doc.setTextColor(30, 50, 137);
-        doc.setFontSize(14); doc.text('QuizSphere', w / 2, 30, { align: 'center' });
-        doc.setFontSize(26); doc.setTextColor(15, 23, 42); doc.text('Certificate of Achievement', w / 2, 52, { align: 'center' });
-        doc.setFontSize(12); doc.setTextColor(100, 116, 139); doc.text('This certifies that', w / 2, 72, { align: 'center' });
-        doc.setFontSize(28); doc.setTextColor(37, 82, 235);
-        doc.text(c.student_name || 'Learner', w / 2, 88, { align: 'center' });
-        doc.setFontSize(12); doc.setTextColor(100, 116, 139); doc.text('has successfully completed', w / 2, 102, { align: 'center' });
-        doc.setFontSize(18); doc.setTextColor(15, 23, 42); doc.text(c.quiz_title || 'Certificate of Achievement', w / 2, 116, { align: 'center' });
-        doc.setFontSize(12); doc.setTextColor(51, 65, 85);
-        doc.text('Score: ' + Math.round(c.score || 0) + '%', w / 2, 134, { align: 'center' });
-        doc.text('Date: ' + new Date(c.earned_at).toLocaleDateString(), w / 2, 142, { align: 'center' });
-        doc.setFontSize(10); doc.setTextColor(100, 116, 139);
-        doc.text('Certificate ID: ' + c.id, w / 2, 158, { align: 'center' });
-        doc.text('Verify at ' + appUrl('verify-certificate.php?id=' + encodeURIComponent(c.id)), w / 2, 166, { align: 'center' });
-        doc.save('QuizSphere-Certificate-' + c.id + '.pdf');
+      if (!btn) return;
+      btn.addEventListener('click', async function () {
+        const sheet = document.getElementById('certificate-print-sheet') || document.querySelector('.certificate-sheet');
+        if (!sheet) return;
+
+        const origBtnHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Preparing PDF...';
+
+        const studentName = (c.student_name || 'Learner').trim();
+        const studentClean = studentName.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const pdfFileName = 'QuizSphere-Certificate-' + studentClean + '.pdf';
+        const jsPDFConstructor = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : window.jsPDF;
+
+        // Helper: Pure vector Canva-styled jsPDF fallback
+        function generateVectorPdf() {
+          if (!jsPDFConstructor) {
+            window.print();
+            return;
+          }
+          const doc = new jsPDFConstructor({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+          const w = 297, h = 210;
+
+          // Warm Ivory Paper Background
+          doc.setFillColor(253, 251, 247);
+          doc.rect(0, 0, w, h, 'F');
+
+          // Outer Navy Border
+          doc.setDrawColor(15, 23, 42);
+          doc.setLineWidth(2.2);
+          doc.rect(7, 7, w - 14, h - 14);
+
+          // Inner Dual Gold Borders
+          doc.setDrawColor(197, 160, 89);
+          doc.setLineWidth(0.8);
+          doc.rect(11, 11, w - 22, h - 22);
+          doc.setLineWidth(0.3);
+          doc.rect(13, 13, w - 26, h - 26);
+
+          // Corner Decorative Diamond Accents
+          doc.setFillColor(197, 160, 89);
+          const cornerDiamonds = [[17, 17], [w - 17, 17], [17, h - 17], [w - 17, h - 17]];
+          cornerDiamonds.forEach(([cx, cy]) => {
+            doc.circle(cx, cy, 1.5, 'F');
+          });
+
+          // Header: Embed Official QuizSphere Brand Logo
+          const logoImg = document.getElementById('cert-brand-logo');
+          if (logoImg && logoImg.src) {
+            try {
+              // Logo native aspect ratio is 1825 / 757 = ~2.41
+              const logoW = 46;
+              const logoH = 46 / (1825 / 757); // 19.1mm
+              doc.addImage(logoImg.src, 'PNG', w / 2 - logoW / 2, 18, logoW, logoH, undefined, 'FAST');
+            } catch (eLogo) {
+              /* Logo fallback if image untranslatable */
+            }
+          }
+
+          // Certificate Heading
+          doc.setFont('times', 'bold');
+          doc.setFontSize(23);
+          doc.setTextColor(15, 23, 42);
+          doc.text('CERTIFICATE OF ACHIEVEMENT', w / 2, 48, { align: 'center' });
+
+          // Gold Separator Line
+          doc.setDrawColor(197, 160, 89);
+          doc.setLineWidth(0.5);
+          doc.line(w / 2 - 35, 52, w / 2 + 35, 52);
+
+          // Conferred line
+          doc.setFont('times', 'italic');
+          doc.setFontSize(10.5);
+          doc.setTextColor(100, 116, 139);
+          doc.text('THIS CREDENTIAL IS PROUDLY PRESENTED TO', w / 2, 64, { align: 'center' });
+
+          // Recipient Name
+          doc.setFont('times', 'bold');
+          doc.setFontSize(26);
+          doc.setTextColor(30, 58, 138);
+          doc.text(studentName, w / 2, 78, { align: 'center' });
+
+          // Gold Underline
+          doc.setDrawColor(197, 160, 89);
+          doc.setLineWidth(0.8);
+          doc.line(w / 2 - 45, 82, w / 2 + 45, 82);
+
+          // Description & Quiz Title
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9.5);
+          doc.setTextColor(71, 85, 105);
+          doc.text('for demonstrating intellectual rigor, critical thinking, and verified mastery in the AI-curated curriculum of', w / 2, 93, { align: 'center' });
+
+          doc.setFont('times', 'bold');
+          doc.setFontSize(16);
+          doc.setTextColor(15, 23, 42);
+          doc.text(c.quiz_title || 'Certificate of Achievement', w / 2, 102, { align: 'center' });
+
+          // 2 Stat Badges (Score & Assessment Level)
+          const scoreVal = Math.round(c.score || 0);
+          let levelVal = 'ADVANCED MASTERY';
+          if (scoreVal >= 95) levelVal = 'HIGHEST HONORS';
+          else if (scoreVal >= 90) levelVal = 'DISTINCTION';
+          else if (scoreVal >= 80) levelVal = 'VERIFIED PROFICIENCY';
+
+          // Badge 1 (Score)
+          doc.setFillColor(255, 255, 255);
+          doc.setDrawColor(197, 160, 89);
+          doc.setLineWidth(0.4);
+          doc.roundedRect(w / 2 - 58, 112, 52, 15, 2, 2, 'FD');
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(6.5);
+          doc.setTextColor(100, 116, 139);
+          doc.text('SCORE', w / 2 - 32, 117, { align: 'center' });
+          doc.setFont('times', 'bold');
+          doc.setFontSize(13);
+          doc.setTextColor(15, 23, 42);
+          doc.text(scoreVal + '%', w / 2 - 32, 124, { align: 'center' });
+
+          // Badge 2 (Assessment Level)
+          doc.setFillColor(254, 252, 232);
+          doc.roundedRect(w / 2 + 6, 112, 52, 15, 2, 2, 'FD');
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(6.5);
+          doc.setTextColor(146, 64, 14);
+          doc.text('ASSESSMENT LEVEL', w / 2 + 32, 117, { align: 'center' });
+          doc.setFont('times', 'bold');
+          doc.setFontSize(11);
+          doc.setTextColor(146, 64, 14);
+          doc.text(levelVal, w / 2 + 32, 124, { align: 'center' });
+
+          // Footer Left: Issuance & Identification Metadata
+          const earnedDate = c.earned_at ? new Date(c.earned_at) : new Date();
+          const dateStr = earnedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+          
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(6.5);
+          doc.setTextColor(100, 116, 139);
+          doc.text('ISSUED ON', 26, 150);
+          doc.setFont('times', 'bold');
+          doc.setFontSize(9.5);
+          doc.setTextColor(15, 23, 42);
+          doc.text(dateStr, 26, 156);
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(6.5);
+          doc.setTextColor(100, 116, 139);
+          doc.text('CERTIFICATE ID', 26, 164);
+          doc.setFont('courier', 'bold');
+          doc.setFontSize(6.5);
+          doc.setTextColor(51, 65, 85);
+          doc.text((c.id || '').substring(0, 26) + (c.id && c.id.length > 26 ? '...' : ''), 26, 170);
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(6);
+          doc.setTextColor(4, 120, 87);
+          doc.text('Official Institutional Registry', 26, 177);
+
+          // Footer Center: Gold Medallion Rosette Seal
+          doc.setFillColor(212, 175, 55);
+          doc.circle(w / 2, 160, 15, 'F');
+          doc.setFillColor(253, 251, 247);
+          doc.circle(w / 2, 160, 13.5, 'F');
+          doc.setDrawColor(197, 160, 89);
+          doc.setLineWidth(0.4);
+          doc.circle(w / 2, 160, 12.5, 'D');
+
+          doc.setFont('times', 'bold');
+          doc.setFontSize(6);
+          doc.setTextColor(15, 23, 42);
+          doc.text('QUIZSPHERE', w / 2, 158.5, { align: 'center' });
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(4.5);
+          doc.setTextColor(180, 83, 9);
+          doc.text('OFFICIAL SEAL', w / 2, 162.5, { align: 'center' });
+          doc.setFontSize(4);
+          doc.setTextColor(15, 23, 42);
+          doc.text('VERIFIED', w / 2, 166, { align: 'center' });
+
+          // Footer Right: Scannable QR Code & Instructions
+          let qrPlaced = false;
+          try {
+            const qrCanvas = document.querySelector('#cert-qr canvas');
+            const qrImg = document.querySelector('#cert-qr img');
+            const qrData = qrCanvas ? qrCanvas.toDataURL('image/png') : (qrImg ? qrImg.src : null);
+            if (qrData) {
+              doc.setFillColor(255, 255, 255);
+              doc.setDrawColor(197, 160, 89);
+              doc.setLineWidth(0.4);
+              doc.roundedRect(w - 68, 142, 46, 42, 2, 2, 'FD');
+              doc.addImage(qrData, 'PNG', w - 58, 145, 26, 26);
+              doc.setFont('helvetica', 'bold');
+              doc.setFontSize(5.5);
+              doc.setTextColor(100, 116, 139);
+              doc.text('Scan to Verify', w - 45, 175, { align: 'center' });
+              doc.setFontSize(4.5);
+              doc.text('Public Verification Ledger', w - 45, 179, { align: 'center' });
+              qrPlaced = true;
+            }
+          } catch (eQr) {
+            /* QR placement fallback */
+          }
+
+          if (!qrPlaced) {
+            doc.setFont('courier', 'normal');
+            doc.setFontSize(6.5);
+            doc.setTextColor(100, 116, 139);
+            doc.text('Certificate ID: ' + c.id, w - 45, 160, { align: 'center' });
+          }
+
+          doc.save(pdfFileName);
+        }
+
+        // Try Stage 1: html2canvas
+        let renderedSuccessfully = false;
+        if (typeof window.html2canvas !== 'undefined' && jsPDFConstructor) {
+          try {
+            if (document.fonts && document.fonts.ready) {
+              await Promise.race([document.fonts.ready, new Promise(res => setTimeout(res, 800))]);
+            }
+
+            const canvas = await window.html2canvas(sheet, {
+              scale: 2.0,
+              useCORS: true,
+              allowTaint: false,
+              backgroundColor: '#fdfbf7',
+              logging: false,
+              onclone: function (clonedDoc) {
+                const s = clonedDoc.getElementById('certificate-print-sheet') || clonedDoc.querySelector('.certificate-sheet');
+                if (s) {
+                  s.style.width = '1040px';
+                  s.style.height = '735px';
+                  s.style.maxWidth = '1040px';
+                  s.style.aspectRatio = 'unset';
+                  s.style.boxShadow = 'none';
+                  s.style.transform = 'none';
+                }
+              }
+            });
+
+            const imgData = canvas.toDataURL('image/png', 0.95);
+            const doc = new jsPDFConstructor({
+              orientation: 'landscape',
+              unit: 'mm',
+              format: 'a4',
+              compress: true
+            });
+
+            doc.addImage(imgData, 'PNG', 0, 0, 297, 210, undefined, 'FAST');
+            doc.save(pdfFileName);
+            renderedSuccessfully = true;
+          } catch (errHtml2Canvas) {
+            console.warn('html2canvas capture skipped/failed, switching to vector PDF fallback:', errHtml2Canvas);
+          }
+        }
+
+        // Stage 2: If Stage 1 did not run or threw, execute the vector fallback
+        if (!renderedSuccessfully) {
+          try {
+            generateVectorPdf();
+          } catch (errVector) {
+            console.error('Vector PDF fallback also failed:', errVector);
+            window.print();
+          }
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = origBtnHtml;
       });
     }
 
@@ -1498,9 +1870,7 @@
     const input = byId('verify-input');
     if (!form || !input) return;
 
-    on(form, 'submit', async (e) => {
-      e.preventDefault();
-      const id = (input.value || '').trim();
+    async function executeVerify(id) {
       if (!id) { showVerifyError('Please enter a certificate ID.'); return; }
       if (!/^[0-9a-fA-F-]{36}$/.test(id)) { showVerifyError('That does not look like a valid certificate ID.'); return; }
 
@@ -1523,9 +1893,36 @@
       if (byId('v-name')) byId('v-name').textContent = c.student_name || 'Learner';
       if (byId('v-achievement')) byId('v-achievement').textContent = c.quiz_title || c.title || 'Certificate of Achievement';
       if (byId('v-score')) byId('v-score').textContent = Math.round(c.score || 0) + '%';
-      if (byId('v-date')) byId('v-date').textContent = new Date(c.earned_at).toLocaleDateString();
+      
+      const earnedDate = c.earned_at ? new Date(c.earned_at) : new Date();
+      if (byId('v-date')) byId('v-date').textContent = earnedDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      // Update link to view certificate if element exists
+      const viewCertBtn = byId('v-view-cert');
+      if (viewCertBtn) {
+        viewCertBtn.href = appUrl('pages/view-certificate.php?id=' + encodeURIComponent(c.id));
+      }
+
       if (result) result.classList.remove('d-none');
+    }
+
+    on(form, 'submit', (e) => {
+      e.preventDefault();
+      const id = (input.value || '').trim();
+      executeVerify(id);
     });
+
+    // Auto-verify if ID is present in query parameters (e.g. from QR scan)
+    const urlParams = new URLSearchParams(window.location.search);
+    const paramId = (urlParams.get('id') || '').trim();
+    if (paramId && /^[0-9a-fA-F-]{36}$/.test(paramId)) {
+      input.value = paramId;
+      executeVerify(paramId);
+    }
 
     function showVerifyError(msg) {
       const error = byId('verify-error');
@@ -1539,6 +1936,7 @@
      Bootstrap page wiring
      ---------------------------------------------------------------------- */
   document.addEventListener('DOMContentLoaded', function () {
+    initSidebarDrawer();
     initSmoothScroll();
     initPasswordToggles();
     initPasswordStrength();

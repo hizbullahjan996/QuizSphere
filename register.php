@@ -14,34 +14,41 @@ require __DIR__ . '/includes/head.php';
   <!-- Decorative side panel -->
   <aside class="auth-side col-lg-5 d-none d-lg-flex">
     <a class="navbar-brand-app mb-4" href="<?php echo url('/index.php'); ?>" style="color:#fff;">
-      <img class="brand-logo" src="<?php echo url('/assets/images/logo.png'); ?>" alt="QuizSphere logo">
-      QuizSphere
+      <img class="brand-logo" src="<?php echo url('/assets/images/logo.png'); ?>" alt="QuizSphere logo" style="height: 2.8rem; filter: brightness(0) invert(1);">
     </a>
     <div>
-      <h2 class="mb-3">Start learning with AI.</h2>
-      <p class="opacity-75 mb-4">
-        Join thousands of learners turning any topic into an intelligent experience.
+      <div class="d-inline-flex align-items-center gap-1 mb-3 px-3 py-1 rounded-pill text-white" style="background: rgba(255,255,255,0.18); font-size: 0.82rem; font-weight: 600;">
+        <i class="bi bi-rocket-takeoff text-warning"></i> Start Learning Today
+      </div>
+      <h2 class="display-6 fw-bold mb-3 text-white">Join thousands of proactive learners.</h2>
+      <p class="opacity-75 mb-4 text-white">
+        Turn lecture notes, textbook chapters, or custom syllabus topics into dynamic, graded quizzes in seconds.
       </p>
-      <div class="d-flex flex-column gap-3">
-        <div class="d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill"></i> Free forever plan</div>
-        <div class="d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill"></i> AI-generated quizzes</div>
-        <div class="d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill"></i> Adaptive practice paths</div>
+      <div class="d-flex flex-column gap-3 text-white">
+        <div class="d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill text-warning"></i> 100% Free personalized learning</div>
+        <div class="d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill text-warning"></i> AI-powered question synthesis</div>
+        <div class="d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill text-warning"></i> Adaptive drills based on concept mastery</div>
       </div>
     </div>
-    <p class="opacity-75 small mb-0">&copy; <?php echo date('Y'); ?> QuizSphere</p>
+    <div class="d-flex justify-content-between align-items-center text-white opacity-75 small">
+      <span>&copy; <?php echo date('Y'); ?> QuizSphere</span>
+      <span>Empowering Smart Learning</span>
+    </div>
   </aside>
 
   <!-- Form side -->
   <main class="auth-main">
-    <div class="auth-card">
+    <div class="auth-card card p-4 p-sm-5 shadow-sm border-1">
       <div class="text-center mb-4">
-        <img class="brand-logo-lg mb-3" src="<?php echo url('/assets/images/logo.png'); ?>" alt="QuizSphere logo">
-        <h1 class="h3 mb-1">Create your account</h1>
-        <p class="text-muted-ink mb-0">Start your personalized learning journey.</p>
+        <a href="<?php echo url('/index.php'); ?>" class="d-inline-block mb-3">
+          <img class="brand-logo" src="<?php echo url('/assets/images/logo.png'); ?>" alt="QuizSphere logo" style="height: 3.2rem;">
+        </a>
+        <h1 class="h3 fw-bold text-ink-900 mb-1">Create your account</h1>
+        <p class="text-muted-ink small mb-0">Start your personalized learning journey today.</p>
       </div>
 
       <?php if ($msg = get_flash('error')): ?>
-        <div class="alert alert-danger"><?php echo e($msg); ?></div>
+        <div class="alert alert-danger mb-3"><?php echo e($msg); ?></div>
       <?php endif; ?>
 
       <form data-auth="signup" novalidate>
@@ -86,15 +93,15 @@ require __DIR__ . '/includes/head.php';
           <div class="feedback feedback-success"></div>
         </div>
 
-        <button type="submit" class="btn btn-brand w-100 py-2 mb-3">
+        <button type="submit" class="btn btn-brand w-100 py-2 mb-3 shadow-sm">
           Create Account <i class="bi bi-arrow-right ms-1"></i>
         </button>
 
         <div class="form-alert" hidden></div>
 
-        <p class="text-center text-muted-ink mb-0">
+        <p class="text-center text-muted-ink small mb-0 mt-3">
           Already have an account?
-          <a href="<?php echo url('/login.php'); ?>">Sign in</a>
+          <a href="<?php echo url('/login.php'); ?>" class="fw-semibold text-brand text-decoration-none">Sign in</a>
         </p>
       </form>
     </div>

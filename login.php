@@ -14,33 +14,41 @@ require __DIR__ . '/includes/head.php';
   <!-- Decorative side panel -->
   <aside class="auth-side col-lg-5 d-none d-lg-flex">
     <a class="navbar-brand-app mb-4" href="<?php echo url('/index.php'); ?>" style="color:#fff;">
-      <img class="brand-logo" src="<?php echo url('/assets/images/logo.png'); ?>" alt="QuizSphere logo">
+      <img class="brand-logo" src="<?php echo url('/assets/images/logo.png'); ?>" alt="QuizSphere logo" style="height: 2.8rem; filter: brightness(0) invert(1);">
     </a>
     <div>
-      <h2 class="mb-3">Welcome back, learner.</h2>
-      <p class="opacity-75 mb-4">
-        Continue your adaptive learning journey and pick up where you left off.
+      <div class="d-inline-flex align-items-center gap-1 mb-3 px-3 py-1 rounded-pill text-white" style="background: rgba(255,255,255,0.18); font-size: 0.82rem; font-weight: 600;">
+        <i class="bi bi-stars text-warning"></i> AI-Powered Assessment Platform
+      </div>
+      <h2 class="display-6 fw-bold mb-3 text-white">Master any topic with adaptive quizzes.</h2>
+      <p class="opacity-75 mb-4 text-white">
+        Log in to track your learning velocity, consult your personal AI Coach, and unlock verified credentials.
       </p>
-      <div class="d-flex flex-column gap-3">
-        <div class="d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill"></i> Personalized quiz recommendations</div>
-        <div class="d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill"></i> Track your progress and streaks</div>
-        <div class="d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill"></i> Earn certificates for mastery</div>
+      <div class="d-flex flex-column gap-3 text-white">
+        <div class="d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill text-warning"></i> Personalized AI quiz generation</div>
+        <div class="d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill text-warning"></i> Real-time mastery analytics &amp; streak tracking</div>
+        <div class="d-flex align-items-center gap-2"><i class="bi bi-check-circle-fill text-warning"></i> Verifiable certificates of achievement</div>
       </div>
     </div>
-    <p class="opacity-75 small mb-0">&copy; <?php echo date('Y'); ?> QuizSphere</p>
+    <div class="d-flex justify-content-between align-items-center text-white opacity-75 small">
+      <span>&copy; <?php echo date('Y'); ?> QuizSphere</span>
+      <span>Empowering Smart Learning</span>
+    </div>
   </aside>
 
   <!-- Form side -->
   <main class="auth-main">
-    <div class="auth-card">
+    <div class="auth-card card p-4 p-sm-5 shadow-sm border-1">
       <div class="text-center mb-4">
-        <img class="brand-logo-lg mb-3" src="<?php echo url('/assets/images/logo.png'); ?>" alt="QuizSphere logo">
-        <h1 class="h3 mb-1">Sign in to QuizSphere</h1>
-        <p class="text-muted-ink mb-0">Enter your details to continue your learning.</p>
+        <a href="<?php echo url('/index.php'); ?>" class="d-inline-block mb-3">
+          <img class="brand-logo" src="<?php echo url('/assets/images/logo.png'); ?>" alt="QuizSphere logo" style="height: 3.2rem;">
+        </a>
+        <h1 class="h3 fw-bold text-ink-900 mb-1">Sign in to QuizSphere</h1>
+        <p class="text-muted-ink small mb-0">Enter your credentials to continue your learning journey.</p>
       </div>
 
       <?php if ($msg = get_flash('error')): ?>
-        <div class="alert alert-danger"><?php echo e($msg); ?></div>
+        <div class="alert alert-danger mb-3"><?php echo e($msg); ?></div>
       <?php endif; ?>
 
       <form data-auth="login" novalidate>
@@ -55,7 +63,7 @@ require __DIR__ . '/includes/head.php';
         <div class="mb-3">
           <div class="d-flex justify-content-between align-items-center">
             <label for="password" class="form-label">Password</label>
-            <a href="#" class="small">Forgot password?</a>
+            <a href="#" class="small text-muted-ink text-decoration-none" onclick="alert('Password reset instructions will be sent to your email.'); return false;">Forgot password?</a>
           </div>
           <div class="input-password-wrap">
             <input type="password" class="form-control" id="password" name="password" placeholder="Your password" autocomplete="current-password">
@@ -68,19 +76,19 @@ require __DIR__ . '/includes/head.php';
         <div class="mb-4">
           <div class="form-check">
             <input class="form-check-input" type="checkbox" id="remember" name="remember">
-            <label class="form-check-label" for="remember">Remember me</label>
+            <label class="form-check-label small text-muted-ink" for="remember">Keep me signed in</label>
           </div>
         </div>
 
-        <button type="submit" class="btn btn-brand w-100 py-2 mb-3">
-          Login <i class="bi bi-box-arrow-in-right ms-1"></i>
+        <button type="submit" class="btn btn-brand w-100 py-2 mb-3 shadow-sm">
+          Sign In <i class="bi bi-box-arrow-in-right ms-1"></i>
         </button>
 
         <div class="form-alert" hidden></div>
 
-        <p class="text-center text-muted-ink mb-0">
+        <p class="text-center text-muted-ink small mb-0 mt-3">
           Don't have an account?
-          <a href="<?php echo url('/register.php'); ?>">Create one now</a>
+          <a href="<?php echo url('/register.php'); ?>" class="fw-semibold text-brand text-decoration-none">Create an account</a>
         </p>
       </form>
     </div>

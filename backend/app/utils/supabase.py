@@ -11,6 +11,7 @@ model so repositories/business logic port 1:1:
   (the logging layer additionally redacts them).
 """
 
+import asyncio
 from typing import Any
 
 import httpx
@@ -85,6 +86,8 @@ class SupabaseClient:
                 break
             except httpx.HTTPError as exc:  # transport-level failure: retry
                 last_exc = exc
+                if _attempt + 1 < MAX_ATTEMPTS:
+                    await asyncio.sleep(0.3 * (_attempt + 1))
         if last_exc is not None:
             raise APIError(
                 "Cannot reach the service right now. Please try again in a moment.",
