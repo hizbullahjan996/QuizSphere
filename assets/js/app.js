@@ -1393,12 +1393,21 @@
 
     if (note) note.textContent = 'Advice is generated from your quiz performance only — the coach never invents facts about you.';
 
+    const formatCoachText = (text) => {
+      let html = escapeHtml(text);
+      // Format markdown bold
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      // Format markdown list items (simple approach for pre-wrap)
+      html = html.replace(/^[\s]*\*[\s]+(.*)/gm, '• $1');
+      return html;
+    };
+
     const scroll = () => { messagesEl.scrollTop = messagesEl.scrollHeight; };
     const addBubble = (role, text, loading) => {
       const row = document.createElement('div');
       row.className = 'coach-msg coach-msg-' + role + (loading ? ' coach-loading' : '');
       row.innerHTML = (role === 'coach' ? '<div class="coach-avatar"><i class="bi bi-stars"></i></div>' : '') +
-        '<div class="coach-bubble">' + (loading ? '<i class="bi bi-three-dots"></i>' : escapeHtml(text)) + '</div>';
+        '<div class="coach-bubble">' + (loading ? '<i class="bi bi-three-dots"></i>' : formatCoachText(text)) + '</div>';
       messagesEl.appendChild(row);
       scroll();
       return { row, bubble: row.querySelector('.coach-bubble') };
