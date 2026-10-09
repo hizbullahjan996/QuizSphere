@@ -92,7 +92,7 @@
     _sessionLoaded = true;
     try {
       
-      const res = await fetch(apiUrl('api/session_info.php'), {
+      const res = await fetch(appUrl('api/session_info.php'), {
         headers: { 'Accept': 'application/json' },
         credentials: 'include'
       });
@@ -120,6 +120,7 @@
   }
 
   async function apiFetch(endpoint, method, body) {
+    const base = (window.APP_URL || '/').replace(/\/+$/, '');
     const opts = { method, headers: { 'Accept': 'application/json' }, credentials: 'include' };
     const isPhp = isPhpEndpoint(endpoint);
 
@@ -174,7 +175,7 @@
     _sessionToken = tokens.access_token;
     
     try {
-      await fetch(apiUrl('api/session_bridge.php'), {
+      await fetch(appUrl('api/session_bridge.php'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         credentials: 'include',
@@ -280,7 +281,7 @@
         try {
           // Revoke the token on FastAPI, then clear the PHP session.
           await apiFetch('api/auth/logout', 'POST', {});
-          await fetch(apiUrl('api/session_clear.php'), {
+          await fetch(appUrl('api/session_clear.php'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             credentials: 'include',
@@ -291,7 +292,7 @@
         } catch (e) {
           // Even if logout fails, clear the PHP session and go home.
           try {
-            await fetch(apiUrl('api/session_clear.php'), {
+            await fetch(appUrl('api/session_clear.php'), {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               credentials: 'include', body: '{}'
             });
@@ -1363,7 +1364,7 @@
           opts.headers['Authorization'] = 'Bearer ' + _sessionToken;
           res = await fetch(apiBase + '/api/pdf_quiz', opts);
         } else {
-          res = await fetch(apiUrl('api/pdf_quiz.php'), opts);
+          res = await fetch(appUrl('api/pdf_quiz.php'), opts);
         }
         let data = {};
         try { data = await res.json(); } catch (e) { /* non-json */ }
@@ -1446,7 +1447,7 @@
           resp = await apiFetch('api/coach.php', 'POST', { message: clean, history: recentHistory });
         } catch (netErr) {
           // Direct fallback to local PHP endpoint if FastAPI is unreachable
-          const phpUrl = apiUrl('api/coach.php');
+          const phpUrl = appUrl('api/coach.php');
           const csrf = csrfToken();
           const fallbackRes = await fetch(phpUrl, {
             method: 'POST',

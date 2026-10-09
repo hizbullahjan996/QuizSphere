@@ -83,9 +83,9 @@ if (file_exists(__DIR__ . '/env.php')) {
     define('AI_COACH_CONTEXT_TTL', 180);
 }
 
-// FastAPI backend URL (defaults to http://localhost:8001 if not defined in config/env.php)
+// FastAPI backend URL
 if (!defined('API_URL')) {
-    define('API_URL', 'http://localhost:8001');
+    define('API_URL', 'https://quizsphere-o61g.onrender.com');
 }
 
 // PHP backend URL for decoupled deployments
