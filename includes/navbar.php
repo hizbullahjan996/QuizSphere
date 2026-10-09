@@ -27,7 +27,7 @@ $navLogoHref = $navIsLoggedIn ? url('/pages/dashboard.php') : url('/index.php');
         <li class="nav-item"><?php echo nav_link('home', url('/index.php'), 'Home'); ?></li>
         <li class="nav-item"><?php echo nav_link('features', url('/index.php#features'), 'Features'); ?></li>
         <li class="nav-item"><?php echo nav_link('how', url('/index.php#how'), 'How It Works'); ?></li>
-        <li class="nav-item"><?php echo nav_link('about', url('/index.php#about'), 'About'); ?></li>
+        <li class="nav-item"><?php echo nav_link('achievements', url('/index.php#achievements'), 'Achievements'); ?></li>
       </ul>
       <div class="d-flex align-items-center gap-2">
         <?php if ($navIsLoggedIn): ?>

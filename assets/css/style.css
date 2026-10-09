@@ -176,13 +176,58 @@ a:focus-visible, button:focus-visible { outline: none; }
 
 .text-muted-ink { color: var(--ink-500); }
 .text-brand { color: var(--brand-600); }
+.text-brand-100 { color: var(--brand-100); }
+.text-brand-200 { color: var(--brand-200); }
+.text-ink-200 { color: var(--ink-200); }
+.text-ink-800 { color: var(--ink-800); }
+.text-ink-900 { color: var(--ink-900); }
+.text-success-ink { color: var(--success-ink); }
+.text-warning-ink { color: var(--warning-ink); }
+.text-danger-ink { color: var(--danger-ink); }
 
-.bg-soft-brand { background-color: var(--brand-50); }
+.bg-surface { background-color: var(--surface); }
+.bg-surface-2 { background-color: var(--surface-2); }
+.bg-surface-3 { background-color: var(--surface-3); }
+
+.bg-soft-brand, .bg-brand-50 { background-color: var(--brand-50); }
+.bg-brand-100 { background-color: var(--brand-100); }
+.bg-brand-200 { background-color: var(--brand-200); }
+.bg-brand-600 { background-color: var(--brand-600); }
+.bg-brand-900 { background-color: var(--brand-900); }
+
 .bg-soft-surface-3 { background-color: var(--surface-3); }
 .bg-soft-info { background-color: var(--info-soft); color: var(--info-ink); }
 .bg-soft-success { background-color: var(--success-soft); color: var(--success-ink); }
+.bg-warning-soft { background-color: var(--warning-soft); }
 .bg-soft-warning { background-color: var(--warning-soft); color: var(--warning-ink); }
 .bg-soft-danger { background-color: var(--danger-soft); color: var(--danger-ink); }
+
+.border-ink-100 { border-color: var(--ink-100) !important; }
+.border-ink-200 { border-color: var(--ink-200) !important; }
+.border-ink-300 { border-color: var(--ink-300) !important; }
+.border-brand-100 { border-color: var(--brand-100) !important; }
+.border-brand-800 { border-color: var(--brand-800) !important; }
+.border-success-subtle { border-color: var(--success-soft) !important; }
+.border-warning-subtle { border-color: var(--warning-soft) !important; }
+.border-danger-soft { border-color: var(--danger-soft) !important; }
+
+.focus-ring-brand:focus { 
+  border-color: var(--brand-500) !important; 
+  box-shadow: 0 0 0 4px rgba(99, 91, 255, 0.15) !important; 
+  outline: none; 
+}
+
+.shadow-xs { box-shadow: var(--shadow-xs); }
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-brand { box-shadow: var(--shadow-brand); }
+.transition-normal { transition: var(--transition-normal); }
+
+.py-6 { padding-top: 5rem !important; padding-bottom: 5rem !important; }
+.py-7 { padding-top: 7rem !important; padding-bottom: 7rem !important; }
+@media (min-width: 992px) {
+  .py-lg-6 { padding-top: 5rem !important; padding-bottom: 5rem !important; }
+  .py-lg-7 { padding-top: 7rem !important; padding-bottom: 7rem !important; }
+}
 
 /* Soft badge tints used by JS templates */
 .badge.bg-success-subtle { background: var(--success-soft); color: var(--success-ink); }
