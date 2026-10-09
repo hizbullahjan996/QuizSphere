@@ -14,7 +14,7 @@ require __DIR__ . '/includes/head.php';
   <!-- Decorative side panel -->
   <aside class="auth-side col-lg-5 d-none d-lg-flex">
     <a class="navbar-brand-app mb-4" href="<?php echo url('/index.php'); ?>" style="color:#fff;">
-      <img class="brand-logo" src="<?php echo url('/assets/images/logo.png'); ?>" alt="QuizSphere logo" style="height: 2.8rem; filter: brightness(0) invert(1);">
+      <img class="brand-logo" src="<?php echo url('/assets/images/logo-white.png'); ?>" alt="QuizSphere logo" style="height: 2.8rem;">
     </a>
     <div>
       <div class="d-inline-flex align-items-center gap-1 mb-3 px-3 py-1 rounded-pill text-white" style="background: rgba(255,255,255,0.18); font-size: 0.82rem; font-weight: 600;">

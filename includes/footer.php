@@ -6,7 +6,7 @@
     <div class="row g-4">
       <div class="col-lg-4">
         <a class="navbar-brand-app mb-2" href="<?php echo url('/index.php'); ?>" style="color:#fff;">
-          <img class="brand-logo" src="<?php echo url('/assets/images/logo.png'); ?>" alt="QuizSphere logo">
+          <img class="brand-logo" src="<?php echo url('/assets/images/logo-white.png'); ?>" alt="QuizSphere logo">
         </a>
         <p class="mt-3 mb-0">
           An AI-powered adaptive learning platform. Turn any topic into an
@@ -34,12 +34,21 @@
       </div>
       <div class="col-lg-3">
         <h5>Follow Us</h5>
-        <div class="d-flex gap-3 fs-5">
-          <a href="#" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
-          <a href="#" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
-          <a href="#" aria-label="GitHub"><i class="bi bi-github"></i></a>
-          <a href="#" aria-label="YouTube"><i class="bi bi-youtube"></i></a>
-        </div>
+<div class="d-flex gap-3 fs-5">
+    <a href="https://www.linkedin.com/in/hizb-ullah-jan-996h"
+       target="_blank"
+       rel="noopener noreferrer"
+       aria-label="LinkedIn">
+        <i class="bi bi-linkedin"></i>
+    </a>
+
+    <a href="https://github.com/hizbullahjan996/QuizSphere"
+       target="_blank"
+       rel="noopener noreferrer"
+       aria-label="GitHub">
+        <i class="bi bi-github"></i>
+    </a>
+</div>
       </div>
     </div>
     <div class="footer-bottom d-flex flex-wrap justify-content-between align-items-center">

@@ -669,22 +669,55 @@
           {
             label: 'Average Score (%)',
             data: [55, 63, 70, 68, 78, 86],
-            borderColor: '#3b6ef6',
-            backgroundColor: 'rgba(59, 110, 246, 0.12)',
+            borderColor: '#4f46e5',
+            backgroundColor: 'rgba(79, 70, 229, 0.12)',
             fill: true,
             tension: 0.35,
             pointRadius: 4,
-            pointBackgroundColor: '#3b6ef6'
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#4f46e5',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2
           }
         ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#111827',
+            titleColor: '#f9fafb',
+            bodyColor: '#f3f4f6',
+            padding: 10,
+            cornerRadius: 8,
+            displayColors: false,
+            callbacks: {
+              label: (ctx) => `Score: ${ctx.parsed.y}%`
+            }
+          }
+        },
         scales: {
-          y: { beginAtZero: true, max: 100, grid: { color: '#eef2f7' } },
-          x: { grid: { display: false } }
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              stepSize: 20,
+              callback: (v) => v + '%',
+              color: '#94a3b8',
+              font: { family: "'Inter', sans-serif", size: 11 }
+            },
+            grid: { color: '#f1f5f9' },
+            border: { color: 'transparent' }
+          },
+          x: {
+            ticks: {
+              color: '#94a3b8',
+              font: { family: "'Inter', sans-serif", size: 11 }
+            },
+            grid: { display: false }
+          }
         }
       }
     });
@@ -1028,13 +1061,11 @@
         }
       }
 
-      // Line chart (trend)
-      renderTrendChart(data.trend || [], data.stats.total_attempts);
+      // Quiz Activity (Bar)
+      renderQuizActivityChart(data.trend || []);
 
-      // Weak / developing / strong lists
-      renderAreaList('weak-list', data.weak || []);
-      renderAreaList('developing-list', data.developing || [], 'warning');
-      renderAreaList('strong-list', data.strong || [], 'success');
+      // Topic Performance (Horizontal Bar)
+      renderTopicPerformanceChart(data.concepts || []);
 
       // Recommendations (practice button)
       renderRecommendation(data.recommendations || {});
@@ -1049,34 +1080,146 @@
     load();
   }
 
-  function renderTrendChart(trend, totalAttempts) {
-    const canvas = byId('performance-chart');
+  function renderQuizActivityChart(trend) {
+    const canvas = byId('quiz-activity-chart');
     if (!canvas) return;
     if (typeof Chart === 'undefined') return;
+    
+    // Reverse to show oldest first if trend isn't ordered, but the PHP sorts them chronologically.
     const labels = trend.length ? trend.map((t) => t.label) : ['No data'];
     const scores = trend.length ? trend.map((t) => t.score) : [0];
+    
     new Chart(canvas, {
-      type: 'line',
+      type: 'bar',
       data: {
         labels,
         datasets: [{
           label: 'Average Score (%)',
           data: scores,
-          borderColor: '#3b6ef6',
-          backgroundColor: 'rgba(59, 110, 246, 0.12)',
-          fill: true,
-          tension: 0.35,
-          pointRadius: 4,
-          pointBackgroundColor: '#3b6ef6'
+          backgroundColor: '#635BFF',
+          borderRadius: 6,
+          barPercentage: 0.6
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#111827',
+            titleColor: '#f9fafb',
+            bodyColor: '#f3f4f6',
+            padding: 10,
+            cornerRadius: 8,
+            displayColors: false,
+            callbacks: {
+              label: (ctx) => `Score: ${ctx.parsed.y}%`
+            }
+          }
+        },
         scales: {
-          y: { beginAtZero: true, max: 100, grid: { color: '#eef2f7' } },
-          x: { grid: { display: false } }
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              stepSize: 20,
+              callback: (v) => v + '%',
+              color: '#64748B',
+              font: { family: "'Inter', sans-serif", size: 11 }
+            },
+            grid: { color: '#F1F5F9' },
+            border: { display: false }
+          },
+          x: {
+            ticks: {
+              color: '#64748B',
+              font: { family: "'Inter', sans-serif", size: 11 }
+            },
+            grid: { display: false },
+            border: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  function renderTopicPerformanceChart(concepts) {
+    const canvas = byId('topic-performance-chart');
+    if (!canvas) return;
+    if (typeof Chart === 'undefined') return;
+    
+    if (concepts.length === 0) {
+      concepts = [{ concept: 'No data', mastery: 0 }];
+    }
+    
+    // Sort by mastery descending
+    const sorted = [...concepts].sort((a, b) => b.mastery - a.mastery).slice(0, 5);
+    const labels = sorted.map(c => {
+      // truncate long concepts
+      const name = c.concept || 'General';
+      return name.length > 15 ? name.substring(0, 15) + '...' : name;
+    });
+    const scores = sorted.map(c => Math.round(c.mastery));
+    
+    // Determine color based on mastery status
+    const bgColors = scores.map(s => {
+      if (s >= 80) return '#10B981'; // Success
+      if (s >= 60) return '#F59E0B'; // Warning
+      return '#EF4444'; // Danger
+    });
+
+    new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Mastery (%)',
+          data: scores,
+          backgroundColor: bgColors,
+          borderRadius: 4,
+          barPercentage: 0.7
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#111827',
+            titleColor: '#f9fafb',
+            bodyColor: '#f3f4f6',
+            padding: 10,
+            cornerRadius: 8,
+            displayColors: false,
+            callbacks: {
+              label: (ctx) => `Mastery: ${ctx.parsed.x}%`
+            }
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              stepSize: 20,
+              callback: (v) => v + '%',
+              color: '#64748B',
+              font: { family: "'Inter', sans-serif", size: 11 }
+            },
+            grid: { color: '#F1F5F9' },
+            border: { display: false }
+          },
+          y: {
+            ticks: {
+              color: '#64748B',
+              font: { family: "'Inter', sans-serif", size: 11 }
+            },
+            grid: { display: false },
+            border: { display: false }
+          }
         }
       }
     });
@@ -1363,8 +1506,63 @@
           byId('sidebarUserXp').textContent = Number(p.xp).toLocaleString() + ' XP';
         }
         renderAchievements((data.achievements || {}));
+        renderScoreDistributionChart(data.recent_attempts || []);
       }
       loadCertificatePreview();
+    }
+
+    function renderScoreDistributionChart(attempts) {
+      const canvas = byId('score-distribution-chart');
+      if (!canvas) return;
+      if (typeof Chart === 'undefined') return;
+
+      let weak = 0, developing = 0, strong = 0;
+      attempts.forEach(a => {
+        if (a.percent >= 80) strong++;
+        else if (a.percent >= 60) developing++;
+        else weak++;
+      });
+      
+      if (weak === 0 && developing === 0 && strong === 0) {
+        // Fallback placeholder
+        weak = 1; developing = 1; strong = 1;
+      }
+
+      new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+          labels: ['Strong (80%+)', 'Developing (60-79%)', 'Weak (<60%)'],
+          datasets: [{
+            data: [strong, developing, weak],
+            backgroundColor: ['#10B981', '#F59E0B', '#EF4444'],
+            borderWidth: 0,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '75%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#64748B',
+                font: { family: "'Inter', sans-serif", size: 11 },
+                usePointStyle: true,
+                padding: 15
+              }
+            },
+            tooltip: {
+              backgroundColor: '#111827',
+              titleColor: '#f9fafb',
+              bodyColor: '#f3f4f6',
+              padding: 10,
+              cornerRadius: 8
+            }
+          }
+        }
+      });
     }
 
     function renderAchievements(ach) {

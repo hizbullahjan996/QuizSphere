@@ -59,16 +59,16 @@ require __DIR__ . '/../includes/head.php';
     <!-- Top bar -->
     <div class="topbar">
       <div>
-        <h1 class="h4 mb-1">Dashboard</h1>
-        <p class="text-muted-ink mb-0">Overview of your learning progress &amp; quiz activity.</p>
+        <h1 class="h4 mb-1 fw-bold text-ink-900">Dashboard</h1>
+        <p class="text-muted-ink mb-0 small">Overview of your learning progress &amp; quiz activity.</p>
       </div>
       <div class="d-flex align-items-center gap-3">
         <a href="<?php echo url('/pages/generate.php'); ?>" class="btn btn-brand btn-sm d-none d-sm-inline-flex">
           <i class="bi bi-plus-lg me-1"></i>New Quiz
         </a>
-        <div class="d-flex align-items-center gap-2">
-          <span class="avatar-circle avatar-circle-md"><?php echo e($first); ?></span>
-          <div class="d-none d-md-block text-start">
+        <div class="topbar-user-pill d-flex align-items-center gap-2">
+          <span class="avatar-circle avatar-circle-sm"><?php echo e($first); ?></span>
+          <div class="d-none d-md-block text-start" style="line-height: 1.2;">
             <div class="fw-semibold text-ink-900 small"><?php echo e($name); ?></div>
             <div class="text-muted-ink" style="font-size: 0.72rem;">Level <?php echo (int) $level; ?></div>
           </div>
@@ -85,7 +85,7 @@ require __DIR__ . '/../includes/head.php';
           </div>
           <h2 class="h4 fw-bold mb-1 text-ink-900">Welcome back, <?php echo e($name); ?>!</h2>
           <p class="text-muted-ink mb-0">
-            You're on a <strong class="text-ink-800"><?php echo (int) $streak; ?>-day streak</strong>. Ready to test your knowledge or generate a new challenge?
+            You're on a <strong class="text-ink-900"><i class="bi bi-fire text-warning me-1"></i><?php echo (int) $streak; ?>-day streak</strong>. Ready to test your knowledge or generate a new challenge?
           </p>
         </div>
         <div class="d-flex flex-wrap gap-2 flex-shrink-0">
@@ -105,7 +105,7 @@ require __DIR__ . '/../includes/head.php';
     <!-- Stat tiles (Row) -->
     <div class="row g-3 mb-4">
       <!-- Tile 1: Total Quizzes -->
-      <div class="col-6 col-xl-3">
+      <div class="col-12 col-sm-6 col-xl-3">
         <div class="stat-tile">
           <div class="d-flex align-items-start justify-content-between">
             <div>
@@ -121,7 +121,7 @@ require __DIR__ . '/../includes/head.php';
       </div>
 
       <!-- Tile 2: Average Score -->
-      <div class="col-6 col-xl-3">
+      <div class="col-12 col-sm-6 col-xl-3">
         <div class="stat-tile">
           <div class="d-flex align-items-start justify-content-between">
             <div>
@@ -137,7 +137,7 @@ require __DIR__ . '/../includes/head.php';
       </div>
 
       <!-- Tile 3: Learning Streak -->
-      <div class="col-6 col-xl-3">
+      <div class="col-12 col-sm-6 col-xl-3">
         <div class="stat-tile">
           <div class="d-flex align-items-start justify-content-between">
             <div>
@@ -153,7 +153,7 @@ require __DIR__ . '/../includes/head.php';
       </div>
 
       <!-- Tile 4: XP & Level -->
-      <div class="col-6 col-xl-3">
+      <div class="col-12 col-sm-6 col-xl-3">
         <div class="stat-tile">
           <div class="d-flex align-items-start justify-content-between mb-1">
             <div>
@@ -161,7 +161,7 @@ require __DIR__ . '/../includes/head.php';
               <div class="stat-value"><?php echo number_format($xp); ?> <span class="fs-6 text-muted-ink fw-normal">XP</span></div>
             </div>
             <div class="stat-icon-wrap stat-icon-violet">
-              <i class="bi bi-star"></i>
+              <i class="bi bi-star-fill"></i>
             </div>
           </div>
           <div class="mt-2" id="level-progress-wrap">
@@ -177,28 +177,28 @@ require __DIR__ . '/../includes/head.php';
       </div>
     </div>
 
-    <!-- Row 1: Performance Chart (Col 8) + Recommendations & Insights (Col 4) -->
+    <!-- Row 1: Quiz Activity (Bar Chart) + Insights -->
     <div class="row g-4 mb-4">
       <div class="col-lg-8">
         <div class="card p-4 h-100">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-              <h5 class="mb-1 fw-bold"><i class="bi bi-activity text-brand me-2"></i>Performance Overview</h5>
-              <p class="text-muted-ink small mb-0">Score trends across your quiz attempts</p>
+              <h5 class="mb-1 fw-bold text-ink-900"><i class="bi bi-bar-chart-line text-brand me-2"></i>Quiz Activity</h5>
+              <p class="text-muted-ink small mb-0">Your scores over time</p>
             </div>
-            <span class="badge-soft">Across attempts</span>
+            <span class="badge-soft">Recent Attempts</span>
           </div>
           <div style="height: 280px; position: relative;">
-            <canvas id="performance-chart"></canvas>
+            <canvas id="quiz-activity-chart"></canvas>
           </div>
         </div>
       </div>
 
-      <div class="col-lg-4 d-flex flex-column gap-4">
+      <div class="col-lg-4 d-flex flex-column gap-3">
         <!-- Recommended Practice -->
         <div class="card p-4 flex-grow-1">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0 fw-bold"><i class="bi bi-bullseye text-brand me-2"></i>Recommended Practice</h5>
+            <h5 class="mb-0 fw-bold text-ink-900"><i class="bi bi-bullseye text-brand me-2"></i>Next Steps</h5>
           </div>
           <div id="recommendation-list">
             <p class="text-muted-ink small mb-0"><i class="bi bi-hourglass-split me-1"></i>Checking your progress...</p>
@@ -208,22 +208,52 @@ require __DIR__ . '/../includes/head.php';
 
         <!-- Insights -->
         <div class="card p-4 flex-grow-1">
-          <h5 class="mb-3 fw-bold"><i class="bi bi-lightbulb text-warning me-2"></i>Learning Insights</h5>
+          <h5 class="mb-3 fw-bold text-ink-900"><i class="bi bi-lightbulb text-warning me-2"></i>Insights</h5>
           <ul class="ps-0 list-unstyled d-flex flex-column gap-2 mb-0" id="insights-list">
-            <li class="text-muted-ink small"><i class="bi bi-hourglass-split me-1"></i>Checking your progress...</li>
+            <li class="text-muted-ink small"><i class="bi bi-hourglass-split me-1"></i>Checking...</li>
           </ul>
         </div>
       </div>
     </div>
 
-    <!-- Row 2: Recent Quizzes (Col 7) + Concept Mastery (Col 5) -->
+    <!-- Row 2: Topic Performance (Horizontal Bar) + Score Distribution (Doughnut) -->
     <div class="row g-4 mb-4">
       <div class="col-lg-7">
         <div class="card p-4 h-100">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-              <h5 class="mb-1 fw-bold"><i class="bi bi-clock-history text-brand me-2"></i>Recent Quizzes</h5>
-              <p class="text-muted-ink small mb-0">Your latest created quizzes</p>
+              <h5 class="mb-1 fw-bold text-ink-900"><i class="bi bi-layout-text-sidebar-reverse text-brand me-2"></i>Topic Performance</h5>
+              <p class="text-muted-ink small mb-0">Mastery per concept</p>
+            </div>
+          </div>
+          <div style="height: 260px; position: relative;">
+            <canvas id="topic-performance-chart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="card p-4 h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h5 class="mb-1 fw-bold text-ink-900"><i class="bi bi-pie-chart text-brand me-2"></i>Score Distribution</h5>
+              <p class="text-muted-ink small mb-0">From recent quizzes</p>
+            </div>
+          </div>
+          <div style="height: 260px; position: relative; display: flex; justify-content: center;">
+            <canvas id="score-distribution-chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Recent Quizzes & Achievements -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-7">
+        <div class="card p-4 h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h5 class="mb-1 fw-bold text-ink-900"><i class="bi bi-clock-history text-brand me-2"></i>Recent Activity</h5>
+              <p class="text-muted-ink small mb-0">Your latest quiz attempts</p>
             </div>
             <a href="<?php echo url('/pages/my_quizzes.php'); ?>" class="small fw-semibold text-brand text-decoration-none">
               View all <i class="bi bi-arrow-right"></i>
@@ -276,60 +306,25 @@ require __DIR__ . '/../includes/head.php';
         </div>
       </div>
 
-      <div class="col-lg-5">
-        <div class="card p-4 h-100">
+      <div class="col-lg-5 d-flex flex-column gap-4">
+        <div class="card p-4 flex-grow-1">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-              <h5 class="mb-1 fw-bold"><i class="bi bi-pie-chart text-brand me-2"></i>Concept Mastery</h5>
-              <p class="text-muted-ink small mb-0">Analysis of your skill distribution</p>
-            </div>
-          </div>
-          <div class="mb-4">
-            <div class="small fw-semibold text-danger mb-2 d-flex align-items-center gap-1">
-              <i class="bi bi-x-circle"></i>Weak Areas
-            </div>
-            <div id="weak-list"><p class="text-muted-ink small mb-0">No data yet.</p></div>
-          </div>
-          <div class="mb-4">
-            <div class="small fw-semibold text-warning mb-2 d-flex align-items-center gap-1">
-              <i class="bi bi-arrow-up-circle"></i>Developing
-            </div>
-            <div id="developing-list"><p class="text-muted-ink small mb-0">No data yet.</p></div>
-          </div>
-          <div>
-            <div class="small fw-semibold text-success mb-2 d-flex align-items-center gap-1">
-              <i class="bi bi-check-circle"></i>Strong Areas
-            </div>
-            <div id="strong-list"><p class="text-muted-ink small mb-0">No data yet.</p></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Row 3: Achievements (Col 6) + Certificates Preview (Col 6) -->
-    <div class="row g-4">
-      <div class="col-lg-6">
-        <div class="card p-4 h-100">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <h5 class="mb-1 fw-bold"><i class="bi bi-trophy text-warning me-2"></i>Achievements</h5>
-              <p class="text-muted-ink small mb-0">Milestones unlocked along your learning path</p>
+              <h5 class="mb-1 fw-bold text-ink-900"><i class="bi bi-trophy text-warning me-2"></i>Achievements</h5>
+              <p class="text-muted-ink small mb-0">Milestones unlocked</p>
             </div>
             <span class="badge-soft" id="achievement-count"></span>
           </div>
           <div id="achievements-grid" class="row g-2"></div>
         </div>
-      </div>
-
-      <div class="col-lg-6">
-        <div class="card p-4 h-100">
+        
+        <div class="card p-4 flex-grow-1">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-              <h5 class="mb-1 fw-bold"><i class="bi bi-award text-brand me-2"></i>Certificates</h5>
-              <p class="text-muted-ink small mb-0">Verified credentials earned with 80%+ scores</p>
+              <h5 class="mb-1 fw-bold text-ink-900"><i class="bi bi-award text-brand me-2"></i>Certificates</h5>
             </div>
             <a href="<?php echo url('/pages/certificates.php'); ?>" class="small fw-semibold text-brand text-decoration-none">
-              View all <i class="bi bi-arrow-right"></i>
+              View all
             </a>
           </div>
           <div id="certificates-preview">

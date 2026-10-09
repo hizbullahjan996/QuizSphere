@@ -51,7 +51,7 @@ if (!function_exists('dash_link')) {
   <!-- Brand Header -->
   <div class="sidebar-header d-flex align-items-center justify-content-between mb-3">
     <a class="navbar-brand-app sidebar-brand" href="<?php echo url('/pages/dashboard.php'); ?>">
-      <img class="brand-logo" src="<?php echo url('/assets/images/logo.png'); ?>" alt="QuizSphere logo">
+      <img class="brand-logo" src="<?php echo url('/assets/images/logo-white.png'); ?>" alt="QuizSphere logo">
     </a>
     <button type="button" class="btn btn-ghost d-lg-none p-1 text-muted-ink" id="sidebarCloseBtn" aria-label="Close navigation menu">
       <i class="bi bi-x-lg fs-5"></i>
