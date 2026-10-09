@@ -67,8 +67,14 @@
   // Resolve an app-relative path (e.g. 'pages/quiz.php') to an absolute URL
   // based on the base URL emitted in the page <head>.
   const appUrl = (path) => {
-    const base = (window.APP_URL || '/').replace(/\/+$/, '');
+    
     return base + '/' + String(path).replace(/^\/+/, '');
+  };
+
+  // Resolve API paths to BACKEND_URL (for decoupled frontend/backend deployments)
+  const apiUrl = (path) => {
+    const backend = (window.BACKEND_URL || window.APP_URL || '/').replace(/\/+$/, '');
+    return backend + '/' + String(path).replace(/^\/+/, '');
   };
 
   /* ----------------------------------------------------------------------
@@ -85,10 +91,10 @@
     if (_sessionLoaded) return;
     _sessionLoaded = true;
     try {
-      const base = (window.APP_URL || '/').replace(/\/+$/, '');
-      const res = await fetch(base + '/api/session_info.php', {
+      
+      const res = await fetch(apiUrl('api/session_info.php'), {
         headers: { 'Accept': 'application/json' },
-        credentials: 'same-origin'
+        credentials: 'include'
       });
       if (res.ok) {
         const info = await res.json();
@@ -114,7 +120,7 @@
   }
 
   async function apiFetch(endpoint, method, body) {
-    const opts = { method, headers: { 'Accept': 'application/json' } };
+    const opts = { method, headers: { 'Accept': 'application/json' }, credentials: 'include' };
     const isPhp = isPhpEndpoint(endpoint);
 
     if (body !== undefined) {
@@ -125,7 +131,7 @@
     if (isPhp) {
       // PHP endpoint - no Bearer token needed (session token bridge / clear)
       if (endpoint.indexOf('http') !== 0 && endpoint.charAt(0) !== '/') {
-        const base = (window.APP_URL || '/').replace(/\/+$/, '');
+        
         endpoint = base + '/' + endpoint;
       }
     } else {
@@ -150,7 +156,7 @@
           endpoint = apiBase + '/' + fastPath;
         }
       } else if (endpoint.indexOf('http') !== 0) {
-        const base = (window.APP_URL || '/').replace(/\/+$/, '');
+        
         endpoint = base + '/' + endpoint.replace(/^\//, '');
       }
     }
@@ -166,12 +172,12 @@
   async function establishSession(tokens, redirect) {
     if (!tokens || !tokens.access_token) return false;
     _sessionToken = tokens.access_token;
-    const base = (window.APP_URL || '/').replace(/\/+$/, '');
+    
     try {
-      await fetch(base + '/api/session_bridge.php', {
+      await fetch(apiUrl('api/session_bridge.php'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        credentials: 'same-origin',
+        credentials: 'include',
         body: JSON.stringify({
           access_token: tokens.access_token,
           refresh_token: tokens.refresh_token || ''
@@ -270,14 +276,14 @@
     document.querySelectorAll('[data-logout]').forEach((btn) => {
       on(btn, 'click', async () => {
         btn.disabled = true;
-        const base = (window.APP_URL || '/').replace(/\/+$/, '');
+        
         try {
           // Revoke the token on FastAPI, then clear the PHP session.
           await apiFetch('api/auth/logout', 'POST', {});
-          await fetch(base + '/api/session_clear.php', {
+          await fetch(apiUrl('api/session_clear.php'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            credentials: 'same-origin',
+            credentials: 'include',
             body: '{}'
           });
           _sessionToken = null;
@@ -285,9 +291,9 @@
         } catch (e) {
           // Even if logout fails, clear the PHP session and go home.
           try {
-            await fetch(base + '/api/session_clear.php', {
+            await fetch(apiUrl('api/session_clear.php'), {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
-              credentials: 'same-origin', body: '{}'
+              credentials: 'include', body: '{}'
             });
           } catch (e2) { /* ignore */ }
           _sessionToken = null;
@@ -1352,12 +1358,12 @@
         await loadSession();
         const apiBase = (window.API_URL || '').replace(/\/+$/, '');
         let res;
-        const opts = { method: 'POST', headers: { 'Accept': 'application/json' }, body: fd };
+        const opts = { method: 'POST', headers: { 'Accept': 'application/json' }, body: fd, credentials: 'include' };
         if (apiBase && _sessionToken) {
           opts.headers['Authorization'] = 'Bearer ' + _sessionToken;
           res = await fetch(apiBase + '/api/pdf_quiz', opts);
         } else {
-          res = await fetch(appUrl('api/pdf_quiz.php'), opts);
+          res = await fetch(apiUrl('api/pdf_quiz.php'), opts);
         }
         let data = {};
         try { data = await res.json(); } catch (e) { /* non-json */ }
@@ -1440,12 +1446,12 @@
           resp = await apiFetch('api/coach.php', 'POST', { message: clean, history: recentHistory });
         } catch (netErr) {
           // Direct fallback to local PHP endpoint if FastAPI is unreachable
-          const phpUrl = (window.APP_URL || '/').replace(/\/+$/, '') + '/api/coach.php';
+          const phpUrl = apiUrl('api/coach.php');
           const csrf = csrfToken();
           const fallbackRes = await fetch(phpUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-Token': csrf },
-            credentials: 'same-origin',
+            credentials: 'include',
             body: JSON.stringify({ message: clean, history: recentHistory, _csrf: csrf })
           });
           let fbData = {};

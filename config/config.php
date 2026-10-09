@@ -88,6 +88,11 @@ if (!defined('API_URL')) {
     define('API_URL', 'http://localhost:8001');
 }
 
+// PHP backend URL for decoupled deployments
+if (!defined('BACKEND_URL')) {
+    define('BACKEND_URL', 'https://quizsphere-o61g.onrender.com');
+}
+
 // When Supabase cannot send the signup confirmation email (hourly email
 // quota exhausted), complete registration server-side with an admin-
 // confirmed account instead of failing. Set to false in config/env.php
@@ -144,8 +149,8 @@ if (session_status() === PHP_SESSION_NONE) {
         'lifetime' => 0,
         'path'     => '/',
         'httponly' => true,
-        'samesite' => 'Lax',
-        'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'samesite' => 'None',
+        'secure'   => true,
     ]);
     session_start();
 }
