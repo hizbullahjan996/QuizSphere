@@ -11,7 +11,6 @@
 
 <div align="center">
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![PHP](https://img.shields.io/badge/PHP-8.5+-777bb4.svg?logo=php&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.12+-3776ab.svg?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi&logoColor=white)

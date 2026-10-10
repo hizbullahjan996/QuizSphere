@@ -28,7 +28,6 @@ $active_page  = $active_page ?? '';
   <link rel="stylesheet" href="<?php echo url('/assets/css/style.css'); ?>">
   <script>
     window.APP_URL = <?php echo json_encode(url('/')); ?>;
-    window.BACKEND_URL = <?php echo json_encode(defined('BACKEND_URL') ? BACKEND_URL : url('/')); ?>;
     window.API_URL = <?php echo json_encode(defined('API_URL') ? API_URL : 'http://localhost:8001'); ?>;
   </script>
 </head>

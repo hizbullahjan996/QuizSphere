@@ -83,14 +83,9 @@ if (file_exists(__DIR__ . '/env.php')) {
     define('AI_COACH_CONTEXT_TTL', 180);
 }
 
-// FastAPI backend URL
+// FastAPI backend URL (defaults to http://localhost:8001 if not defined in config/env.php)
 if (!defined('API_URL')) {
-    define('API_URL', 'https://quizsphere-o61g.onrender.com');
-}
-
-// PHP backend URL for decoupled deployments
-if (!defined('BACKEND_URL')) {
-    define('BACKEND_URL', 'https://quizsphere-o61g.onrender.com');
+    define('API_URL', 'http://localhost:8001');
 }
 
 // When Supabase cannot send the signup confirmation email (hourly email
@@ -149,8 +144,8 @@ if (session_status() === PHP_SESSION_NONE) {
         'lifetime' => 0,
         'path'     => '/',
         'httponly' => true,
-        'samesite' => 'None',
-        'secure'   => true,
+        'samesite' => 'Lax',
+        'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
     ]);
     session_start();
 }
