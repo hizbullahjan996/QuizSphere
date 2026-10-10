@@ -28,56 +28,73 @@ require __DIR__ . '/../includes/head.php';
 
   <main class="dashboard-main" id="leaderboard-app">
 
-    <div class="topbar">
-      <div>
-        <div class="d-inline-flex align-items-center gap-2 badge-soft text-warning mb-2">
+    <div class="row g-4 mb-4">
+      <div class="col-12">
+        <div class="d-inline-flex align-items-center gap-2 bg-warning-soft text-warning-ink mb-3 px-3 py-1 rounded-pill fw-bold small text-uppercase tracking-wide border border-warning-subtle">
           <i class="bi bi-trophy-fill"></i> Global Rankings
         </div>
-        <h1 class="h4 fw-bold text-ink-900 mb-1">Learner Leaderboard</h1>
-        <p class="text-muted-ink mb-0">Celebrate top performers by total XP. Complete quizzes and maintain streaks to ascend.</p>
-      </div>
-      <a href="<?php echo url('/pages/generate.php'); ?>" class="btn btn-brand d-none d-sm-inline-flex">
-        <i class="bi bi-plus-lg me-2"></i>Earn XP Now
-      </a>
-    </div>
-
-    <!-- Current User's Rank Card -->
-    <div class="card p-4 mb-4 border-brand-subtle" id="leaderboard-me" style="background: linear-gradient(135deg, var(--surface) 0%, var(--brand-50) 100%);">
-      <div class="d-flex align-items-center gap-3">
-        <div class="icon-badge badge-podium" style="width: 3.2rem; height: 3.2rem; font-size: 1.35rem;">
-          <i class="bi bi-person-fill"></i>
-        </div>
-        <div class="flex-grow-1">
-          <div class="fw-semibold text-ink-900 fs-5">Your rank</div>
-          <div class="small text-muted-ink">Loading your ranking position...</div>
-        </div>
-        <div class="d-none d-md-block text-end">
-          <span class="badge-soft text-brand fw-semibold">Real-time Standing</span>
-        </div>
+        <h1 class="h3 fw-bold text-ink-900 mb-2" style="letter-spacing: -0.02em;">Leaderboard</h1>
+        <p class="text-muted-ink mb-0 fs-5" style="max-width: 600px;">
+          Track your progress, earn experience points (XP), and see how you rank among other learners.
+        </p>
       </div>
     </div>
 
-    <!-- Top Learners Table Card -->
-    <div class="card p-4">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-          <h5 class="mb-1 fw-bold text-ink-900"><i class="bi bi-stars text-warning me-2"></i>Top Learners</h5>
-          <p class="text-muted-ink small mb-0">Ranked by total earned experience points (XP)</p>
+    <!-- Overview Stats -->
+    <div class="row g-3 g-xl-4 mb-5" id="leaderboard-stats-container" style="display: none;">
+      <div class="col-sm-6 col-lg-3">
+        <div class="card bg-surface border-1 border-ink-200 shadow-sm rounded-4 p-4 h-100 text-center transition-normal hover-bg-brand-50">
+          <div class="small fw-semibold text-muted-ink text-uppercase tracking-wider mb-2" style="font-size: 0.75rem;">Your Rank</div>
+          <div class="h2 fw-bold text-brand mb-0" id="stat-my-rank">--</div>
         </div>
-        <span class="badge-soft">All-Time XP</span>
       </div>
+      <div class="col-sm-6 col-lg-3">
+        <div class="card bg-surface border-1 border-ink-200 shadow-sm rounded-4 p-4 h-100 text-center transition-normal hover-bg-brand-50">
+          <div class="small fw-semibold text-muted-ink text-uppercase tracking-wider mb-2" style="font-size: 0.75rem;">Your XP</div>
+          <div class="h2 fw-bold text-ink-900 mb-0" id="stat-my-xp">0</div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <div class="card bg-surface border-1 border-ink-200 shadow-sm rounded-4 p-4 h-100 text-center transition-normal hover-bg-brand-50">
+          <div class="small fw-semibold text-muted-ink text-uppercase tracking-wider mb-2" style="font-size: 0.75rem;">Total Participants</div>
+          <div class="h2 fw-bold text-ink-900 mb-0" id="stat-total-users">0</div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <div class="card bg-surface border-1 border-ink-200 shadow-sm rounded-4 p-4 h-100 text-center transition-normal hover-bg-brand-50">
+          <div class="small fw-semibold text-muted-ink text-uppercase tracking-wider mb-2" style="font-size: 0.75rem;">Highest XP</div>
+          <div class="h2 fw-bold text-ink-900 mb-0" id="stat-top-xp">0</div>
+        </div>
+      </div>
+    </div>
 
-      <div class="form-alert mt-3" id="leaderboard-error" hidden></div>
+    <!-- Podium Section -->
+    <div class="mb-5" id="podium-container" style="display: none;">
+      <div class="text-center mb-4">
+        <h4 class="fw-bold text-ink-900"><i class="bi bi-stars text-warning me-2"></i>Top Performers</h4>
+      </div>
+      <div class="row g-3 justify-content-center align-items-end" id="podium-cards" style="min-height: 220px;">
+        <!-- Populated via JS -->
+      </div>
+    </div>
+
+    <!-- Rankings Table -->
+    <div class="card p-0 border-1 border-ink-200 shadow-sm bg-surface rounded-4 overflow-hidden mb-4">
+      <div class="p-4 border-bottom border-ink-100 d-flex justify-content-between align-items-center bg-surface-2">
+        <h5 class="mb-0 fw-bold text-ink-900">All-Time Standings</h5>
+      </div>
+      
+      <div class="form-alert m-3" id="leaderboard-error" hidden></div>
 
       <div class="table-responsive">
-        <table class="table align-middle mb-0">
-          <thead>
-            <tr class="text-muted-ink small">
-              <th style="width: 80px;">Rank</th>
-              <th>Student</th>
-              <th class="text-end">Level</th>
-              <th class="text-end">Quizzes</th>
-              <th class="text-end">Total XP</th>
+        <table class="table align-middle mb-0 table-hover">
+          <thead class="bg-surface">
+            <tr class="text-muted-ink small text-uppercase tracking-wider" style="font-size: 0.75rem;">
+              <th class="ps-4 fw-semibold" style="width: 80px;">Rank</th>
+              <th class="fw-semibold">Learner</th>
+              <th class="text-center fw-semibold">Level</th>
+              <th class="text-center fw-semibold">Quizzes</th>
+              <th class="text-end pe-4 fw-semibold">Total XP</th>
             </tr>
           </thead>
           <tbody id="leaderboard-body">

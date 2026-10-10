@@ -1627,46 +1627,100 @@
       const { ok, data } = await apiFetch('api/leaderboard.php', 'GET');
       const body = byId('leaderboard-body');
       const errEl = byId('leaderboard-error');
+      
+      const statsContainer = byId('leaderboard-stats-container');
+      const podiumContainer = byId('podium-container');
+      const podiumCards = byId('podium-cards');
+      
       if (!ok || !data) {
         if (errEl) { errEl.hidden = false; errEl.textContent = (data && data.message) || 'Could not load the leaderboard.'; }
-        if (body) body.innerHTML = '<tr><td colspan="5" class="text-center text-muted-ink py-4">Leaderboard unavailable.</td></tr>';
+        if (body) body.innerHTML = '<tr><td colspan="5" class="text-center text-muted-ink py-5 bg-surface-2">Leaderboard unavailable.</td></tr>';
         return;
       }
 
-      // My rank card
-      const meWrap = byId('leaderboard-me');
-      if (meWrap) {
-        const me = data.me;
-        if (me && me.rank) {
-          const nameEl = meWrap.querySelector('.fw-semibold');
-          if (nameEl) nameEl.textContent = 'Your rank: #' + me.rank + ' (' + me.xp + ' XP, Level ' + me.level + ')';
-          const sub = meWrap.querySelector('.small');
-          if (sub) sub.textContent = 'Stay consistent to climb higher!';
-        } else {
-          const nameEl = meWrap.querySelector('.fw-semibold');
-          if (nameEl) nameEl.textContent = 'No rank yet';
-          const sub = meWrap.querySelector('.small');
-          if (sub) sub.textContent = 'Complete quizzes to earn XP and appear on the leaderboard.';
-        }
-      }
-
-      // Top learners
-      if (!body) return;
       const rows = data.leaderboard || [];
+      const me = data.me;
+
+      // Update overview stats
+      if (statsContainer) {
+        statsContainer.style.display = 'flex';
+        byId('stat-my-rank').textContent = (me && me.rank) ? '#' + me.rank : '--';
+        byId('stat-my-xp').textContent = (me && me.xp) ? Number(me.xp).toLocaleString() : '0';
+        byId('stat-total-users').textContent = rows.length;
+        byId('stat-top-xp').textContent = rows.length > 0 ? Number(rows[0].xp).toLocaleString() : '0';
+      }
+
+      // Populate podium if enough players
+      if (podiumContainer && podiumCards && rows.length > 0) {
+        podiumContainer.style.display = 'block';
+        let podiumHtml = '';
+        const top3 = rows.slice(0, 3);
+        
+        // Podium order: 2, 1, 3 for visual hierarchy
+        const order = [1, 0, 2]; 
+        
+        order.forEach((index) => {
+          if (!top3[index]) return;
+          const r = top3[index];
+          const isFirst = index === 0;
+          const height = isFirst ? '220px' : (index === 1 ? '180px' : '150px');
+          const medalColors = ['#f59e0b', '#9ca3af', '#b45309']; // Gold, Silver, Bronze
+          const color = medalColors[index];
+          
+          podiumHtml += `
+          <div class="col-4 col-sm-3 d-flex flex-column justify-content-end align-items-center">
+            <div class="avatar-circle mb-3 border border-2 border-surface shadow-sm d-flex align-items-center justify-content-center text-white fw-bold fs-5" style="width: 60px; height: 60px; border-radius: 50%; background-color: ${color}; z-index: 1;">
+              ${r.full_name ? r.full_name.charAt(0).toUpperCase() : 'L'}
+            </div>
+            <div class="card w-100 border-0 text-center shadow-sm d-flex flex-column pt-4 pb-2" style="background-color: var(--surface); height: ${height}; border-top: 4px solid ${color} !important; margin-top: -30px; border-radius: 16px 16px 0 0;">
+              <h6 class="fw-bold text-ink-900 mb-0 px-2 text-truncate">${escapeHtml(r.full_name || 'Learner')}</h6>
+              <div class="text-muted-ink small mt-1">Level ${r.level}</div>
+              <div class="mt-auto mb-2">
+                <span class="badge" style="background-color: ${color}20; color: ${color};"><i class="bi bi-star-fill me-1"></i>${Number(r.xp).toLocaleString()} XP</span>
+              </div>
+            </div>
+          </div>`;
+        });
+        podiumCards.innerHTML = podiumHtml;
+      }
+
+      // Table layout
+      if (!body) return;
       if (!rows.length) {
-        body.innerHTML = '<tr><td colspan="5" class="text-center text-muted-ink py-4">No learners on the board yet.</td></tr>';
+        body.innerHTML = '<tr><td colspan="5" class="text-center text-muted-ink py-5 bg-surface-2">No learners on the board yet.</td></tr>';
         return;
       }
-      const medal = { 1: '🥇', 2: '🥈', 3: '🥉' };
+      
+      const medalIcons = { 1: '<i class="bi bi-trophy-fill" style="color: #f59e0b;"></i>', 2: '<i class="bi bi-award-fill" style="color: #9ca3af;"></i>', 3: '<i class="bi bi-award-fill" style="color: #b45309;"></i>' };
+      
       body.innerHTML = rows.map((r) => {
-        const isMe = data.me && data.me.user_id === r.user_id;
-        return '<tr' + (isMe ? ' class="table-active"' : '') + '>' +
-          '<td><span class="fw-bold">' + (medal[r.rank] || '#' + r.rank) + '</span></td>' +
-          '<td class="fw-semibold">' + escapeHtml(r.full_name || 'Learner') + (isMe ? ' <span class="badge bg-brand-subtle">You</span>' : '') + '</td>' +
-          '<td class="text-end">' + r.level + '</td>' +
-          '<td class="text-end">' + r.quizzes_completed + '</td>' +
-          '<td class="text-end fw-bold">' + Number(r.xp || 0).toLocaleString() + ' XP</td>' +
-        '</tr>';
+        const isMe = me && me.user_id === r.user_id;
+        const initial = r.full_name ? r.full_name.charAt(0).toUpperCase() : 'L';
+        const bgRow = isMe ? 'style="background-color: var(--brand-50);"' : '';
+        
+        return `<tr class="align-middle ${isMe ? 'border-brand border-start border-4' : ''}" ${bgRow}>
+          <td class="ps-4">
+            <div class="d-flex align-items-center justify-content-center fw-bold fs-6" style="width: 32px; height: 32px;">
+              ${medalIcons[r.rank] || '#' + r.rank}
+            </div>
+          </td>
+          <td>
+            <div class="d-flex align-items-center gap-3 py-1">
+              <div class="avatar-circle bg-surface-2 text-ink-700 fw-bold d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; border-radius: 50%;">
+                ${initial}
+              </div>
+              <div class="fw-semibold text-ink-900">
+                ${escapeHtml(r.full_name || 'Learner')}
+                ${isMe ? ' <span class="badge bg-brand text-white ms-2 px-2 py-1 shadow-xs rounded-pill" style="font-size: 0.65rem;">You</span>' : ''}
+              </div>
+            </div>
+          </td>
+          <td class="text-center">
+            <span class="badge bg-surface-2 border border-ink-200 text-ink-800 rounded-pill px-3 shadow-xs">Lvl ${r.level}</span>
+          </td>
+          <td class="text-center text-muted-ink fw-semibold">${r.quizzes_completed}</td>
+          <td class="text-end pe-4 fw-bold text-ink-900">${Number(r.xp || 0).toLocaleString()} <span class="text-muted-ink small fw-normal ms-1">XP</span></td>
+        </tr>`;
       }).join('');
     }
 
@@ -1684,37 +1738,83 @@
       const { ok, data } = await apiFetch('api/certificates.php', 'GET');
       const listEl = byId('certificates-list');
       const errEl = byId('certificates-error');
+      const statsContainer = byId('cert-stats-container');
+      
       if (!listEl) return;
       if (!ok || !data) {
         if (errEl) { errEl.hidden = false; errEl.textContent = (data && data.message) || 'Could not load certificates.'; }
-        listEl.innerHTML = '<div class="text-center text-muted-ink py-4">Certificates unavailable.</div>';
+        listEl.innerHTML = '<div class="text-center text-muted-ink py-5 bg-surface-2 rounded-4 border border-ink-200">Certificates unavailable.</div>';
         return;
       }
+      
       const list = data.certificates || [];
+      
+      // Update statistics
+      if (statsContainer && list.length > 0) {
+        statsContainer.style.display = 'flex';
+        byId('stat-total-certs').textContent = list.length;
+        
+        const highestScore = list.reduce((max, c) => {
+          const score = Math.round(c.score || 0);
+          return score > max ? score : max;
+        }, 0);
+        byId('stat-highest-score').textContent = highestScore + '%';
+      }
+      
       if (!list.length) {
-        listEl.innerHTML = '<div class="text-center py-5"><i class="bi bi-award fs-3 text-brand"></i>' +
-          '<p class="text-muted-ink mb-0 mt-2">No certificates yet. Score 80% or higher on a quiz to earn one.</p></div>';
+        listEl.innerHTML = `
+          <div class="card p-5 text-center border-1 border-ink-200 shadow-sm bg-surface rounded-4">
+            <div class="d-flex justify-content-center mb-4">
+              <div class="avatar-circle avatar-circle-lg bg-surface-2 text-ink-300" style="width: 80px; height: 80px; border-radius: 50%;">
+                <i class="bi bi-award fs-1"></i>
+              </div>
+            </div>
+            <h4 class="fw-bold text-ink-900 mb-2">No certificates yet</h4>
+            <p class="text-muted-ink mb-4 mx-auto" style="max-width: 400px;">
+              Score 80% or higher on any quiz to automatically earn a verifiable certificate of achievement.
+            </p>
+            <a href="${appUrl('pages/generate.php')}" class="btn btn-brand px-4 py-2 rounded-pill fw-semibold shadow-brand transition-normal">
+              <i class="bi bi-magic me-2"></i>Generate a Quiz
+            </a>
+          </div>
+        `;
         return;
       }
-      listEl.innerHTML = '<div class="row g-3">' + list.map((c) => {
+      
+      listEl.innerHTML = '<div class="row g-4">' + list.map((c) => {
         const score = Math.round(c.score || 0);
         const earnedDate = c.earned_at ? new Date(c.earned_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
-        return '<div class="col-md-6"><div class="card p-4 h-100 shadow-xs border-1 transition-all" style="border-left: 4px solid #c5a059 !important;">' +
-          '<div class="d-flex align-items-center gap-3">' +
-            '<div class="icon-badge badge-brand" style="background: rgba(197, 160, 89, 0.15); color: #b48220;"><i class="bi bi-award-fill fs-5"></i></div>' +
-            '<div class="flex-grow-1">' +
-              '<div class="fw-bold text-ink-900">' + escapeHtml(c.quiz_title || 'Certificate of Achievement') + '</div>' +
-              '<div class="small text-muted-ink d-flex align-items-center gap-2 mt-1">' +
-                '<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check2-circle me-1"></i>Score ' + score + '%</span>' +
-                '<span>· ' + earnedDate + '</span>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="d-flex gap-2 mt-3 pt-2 border-top">' +
-            '<a class="btn btn-sm btn-brand flex-grow-1" href="' + appUrl('pages/view-certificate.php?id=' + encodeURIComponent(c.id)) + '"><i class="bi bi-award me-1"></i>View Certificate</a>' +
-            '<a class="btn btn-sm btn-outline-brand" href="' + appUrl('verify-certificate.php?id=' + encodeURIComponent(c.id)) + '" target="_blank" rel="noopener" title="Verify on public ledger"><i class="bi bi-patch-check me-1"></i>Verify</a>' +
-          '</div>' +
-        '</div></div>';
+        const viewUrl = appUrl('pages/view-certificate.php?id=' + encodeURIComponent(c.id));
+        const verifyUrl = appUrl('verify-certificate.php?id=' + encodeURIComponent(c.id));
+        
+        return `
+        <div class="col-md-6 col-xl-4 d-flex">
+          <div class="card p-0 h-100 shadow-sm border-1 border-ink-200 transition-normal hover-bg-brand-50 rounded-4 w-100 d-flex flex-column overflow-hidden group">
+            <div class="bg-surface-2 p-4 border-bottom border-ink-100 position-relative">
+              <div class="position-absolute end-0 top-0 mt-3 me-3">
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill py-1 px-2 d-flex align-items-center gap-1 shadow-xs">
+                  <i class="bi bi-patch-check-fill"></i> Score ${score}%
+                </span>
+              </div>
+              <div class="avatar-circle bg-brand text-white shadow-brand d-flex align-items-center justify-content-center mb-3" style="width: 48px; height: 48px; border-radius: 12px;">
+                <i class="bi bi-award-fill fs-4"></i>
+              </div>
+              <h5 class="fw-bold text-ink-900 mb-1 pe-5 lh-sm">${escapeHtml(c.quiz_title || 'Certificate of Achievement')}</h5>
+              <div class="small text-muted-ink d-flex align-items-center gap-1">
+                <i class="bi bi-calendar-check"></i> Issued ${earnedDate}
+              </div>
+            </div>
+            
+            <div class="p-3 d-flex gap-2 mt-auto bg-surface">
+              <a class="btn btn-sm bg-surface-2 border-ink-200 text-ink-800 flex-grow-1 fw-semibold transition-normal hover-bg-brand-50" href="${viewUrl}">
+                <i class="bi bi-eye me-1 text-brand"></i> View
+              </a>
+              <a class="btn btn-sm bg-surface-2 border-ink-200 text-ink-800 fw-semibold transition-normal hover-bg-brand-50" href="${verifyUrl}" target="_blank" rel="noopener" title="Verify on public ledger">
+                <i class="bi bi-qr-code text-ink-600"></i>
+              </a>
+            </div>
+          </div>
+        </div>`;
       }).join('') + '</div>';
     }
 
