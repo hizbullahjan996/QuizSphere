@@ -1144,10 +1144,75 @@ a:focus-visible, button:focus-visible { outline: none; }
   border: 1px solid var(--ink-200);
   color: var(--ink-800);
   font-size: 0.95rem;
-  white-space: pre-wrap;
   word-break: break-word;
   line-height: 1.6;
   box-shadow: var(--shadow-xs);
+}
+.coach-bubble p:last-child, 
+.coach-bubble ul:last-child, 
+.coach-bubble ol:last-child {
+  margin-bottom: 0;
+}
+.coach-bubble p {
+  margin-bottom: 0.75rem;
+}
+.coach-bubble h1, .coach-bubble h2, .coach-bubble h3, .coach-bubble h4, .coach-bubble h5, .coach-bubble h6 {
+  font-weight: 700;
+  color: var(--ink-900);
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+.coach-msg-user .coach-bubble h1, .coach-msg-user .coach-bubble h2, .coach-msg-user .coach-bubble h3, .coach-msg-user .coach-bubble h4, .coach-msg-user .coach-bubble h5, .coach-msg-user .coach-bubble h6 {
+  color: #fff;
+}
+.coach-bubble h1 { font-size: 1.35rem; }
+.coach-bubble h2 { font-size: 1.2rem; }
+.coach-bubble h3 { font-size: 1.1rem; }
+.coach-bubble h4 { font-size: 1rem; }
+.coach-bubble ul, .coach-bubble ol {
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+.coach-bubble li {
+  margin-bottom: 0.25rem;
+}
+.coach-bubble code {
+  background: var(--ink-100);
+  color: var(--ink-800);
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  font-size: 0.85em;
+}
+.coach-bubble pre {
+  background: var(--ink-900);
+  color: #fff;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.coach-bubble pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+.coach-bubble blockquote {
+  border-left: 3px solid var(--brand-500);
+  padding-left: 1rem;
+  margin-left: 0;
+  color: var(--ink-600);
+  font-style: italic;
+}
+.coach-bubble table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+.coach-bubble th, .coach-bubble td {
+  padding: 0.5rem;
+  border: 1px solid var(--ink-200);
 }
 .coach-msg-coach .coach-bubble {
   border-top-left-radius: 0;
@@ -1158,6 +1223,10 @@ a:focus-visible, button:focus-visible { outline: none; }
   border-color: var(--brand-600);
   color: #fff;
   border-top-right-radius: 0;
+}
+.coach-msg-user .coach-bubble code {
+  background: rgba(0,0,0,0.2);
+  color: #fff;
 }
 .coach-bubble a { color: inherit; text-decoration: underline; font-weight: 600; }
 .coach-loading .coach-bubble { color: var(--ink-500); font-style: italic; background: var(--surface-2); }

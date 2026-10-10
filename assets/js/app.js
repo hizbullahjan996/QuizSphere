@@ -1397,11 +1397,14 @@
     if (note) note.textContent = 'Advice is generated from your quiz performance only — the coach never invents facts about you.';
 
     const formatCoachText = (text) => {
+      if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
+        const rawHtml = marked.parse(text, { breaks: true });
+        return DOMPurify.sanitize(rawHtml);
+      }
+      // Fallback if scripts failed to load
       let html = escapeHtml(text);
-      // Format markdown bold
       html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      // Format markdown list items (simple approach for pre-wrap)
-      html = html.replace(/^[\s]*\*[\s]+(.*)/gm, '• $1');
+      html = html.replace(/^[\s]*\*[\s]+(.*)/gm, '&bull; $1');
       return html;
     };
 
@@ -1458,7 +1461,7 @@
 
         const data = resp && resp.data ? resp.data : {};
         if (resp && resp.ok && data.message) {
-          loading.bubble.textContent = data.message;
+          loading.bubble.innerHTML = formatCoachText(data.message);
           loading.row.classList.remove('coach-loading');
           history.push({ role: 'user', content: clean });
           history.push({ role: 'coach', content: data.message });
@@ -1466,12 +1469,12 @@
             history = history.slice(-8);
           }
         } else {
-          loading.bubble.textContent = (data && data.message) || 'The AI coach is temporarily unavailable. Please try again in a moment.';
+          loading.bubble.innerHTML = formatCoachText((data && data.message) || 'The AI coach is temporarily unavailable. Please try again in a moment.');
           loading.row.classList.remove('coach-loading');
         }
         scroll();
       } catch (err) {
-        loading.bubble.textContent = 'Network error. Please check your connection and try again.';
+        loading.bubble.innerHTML = formatCoachText('Network error. Please check your connection and try again.');
         loading.row.classList.remove('coach-loading');
       } finally {
         isSubmitting = false;
