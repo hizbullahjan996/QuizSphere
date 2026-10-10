@@ -914,7 +914,10 @@
     if (nextBtn) on(nextBtn, 'click', () => { if (current < questions.length - 1 && answers[current] !== undefined) { current++; render(); } });
     if (submitBtn) on(submitBtn, 'click', () => { clearInterval(timerId); submitQuiz(); });
 
+    let isSubmitting = false;
     async function submitQuiz() {
+      if (isSubmitting) return;
+      isSubmitting = true;
       if (timerId) clearInterval(timerId);
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Submitting...';

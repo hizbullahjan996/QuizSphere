@@ -22,11 +22,23 @@ if (!$auth || !$auth->check()) {
 
 $token = $auth->accessToken();
 $quizzes = [];
+$attempts = [];
+$latestAttempts = [];
+
 if ($token) {
     try {
         $quizzes = $repo->listUserQuizzes($auth->id(), $token, 50);
+        $attempts = $repo->listUserAttempts($auth->id(), $token, 500);
+        
+        foreach ($attempts as $a) {
+            $qid = $a['quiz_id'];
+            if (!isset($latestAttempts[$qid])) {
+                $latestAttempts[$qid] = $a; // listUserAttempts is ordered by completed_at desc
+            }
+        }
     } catch (SupabaseException $e) {
         $quizzes = [];
+        $attempts = [];
     }
 }
 
@@ -115,10 +127,10 @@ require __DIR__ . '/../includes/head.php';
         <table class="table align-middle mb-0 table-hover" id="quizTable" style="min-width: 700px;">
           <thead class="bg-surface">
             <tr class="text-muted-ink small text-uppercase tracking-wider" style="font-size: 0.75rem;">
-              <th class="ps-4 fw-semibold border-bottom border-ink-100" style="width: 40%;">Quiz Title</th>
+              <th class="ps-4 fw-semibold border-bottom border-ink-100" style="width: 35%;">Quiz Title</th>
               <th class="fw-semibold border-bottom border-ink-100" style="width: 20%;">Topic</th>
               <th class="fw-semibold border-bottom border-ink-100">Difficulty</th>
-              <th class="fw-semibold border-bottom border-ink-100">Created</th>
+              <th class="fw-semibold border-bottom border-ink-100">Status & Score</th>
               <th class="text-end pe-4 fw-semibold border-bottom border-ink-100">Action</th>
             </tr>
           </thead>
@@ -130,6 +142,8 @@ require __DIR__ . '/../includes/head.php';
                 $diffBadgeClass = 'bg-surface-2 text-ink-800 border-ink-200';
                 if ($diff === 'easy') $diffBadgeClass = 'bg-success-subtle text-success border-success-subtle';
                 if ($diff === 'hard') $diffBadgeClass = 'bg-danger-soft text-danger-ink border-danger-subtle';
+                $qid = $q['id'];
+                $hasAttempt = isset($latestAttempts[$qid]);
               ?>
               <tr class="quiz-row transition-normal">
                 <td class="ps-4 text-wrap">
@@ -138,10 +152,20 @@ require __DIR__ . '/../includes/head.php';
                 </td>
                 <td class="text-wrap"><span class="text-muted-ink small quiz-topic-col" style="word-break: break-word;"><?php echo e($q['topic'] ?? '—'); ?></span></td>
                 <td><span class="badge border shadow-xs rounded-pill px-3 <?php echo $diffBadgeClass; ?>"><?php echo e(ucfirst($diff)); ?></span></td>
-                <td class="text-muted-ink small"><i class="bi bi-calendar3 me-1"></i><?php echo e(date('M j, Y', strtotime((string) ($q['created_at'] ?? 'now')))); ?></td>
+                <td>
+                  <?php if ($hasAttempt): ?>
+                    <?php $att = $latestAttempts[$qid]; ?>
+                    <div class="fw-semibold text-ink-900 mb-1">
+                      <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Completed</span> &middot; <?php echo $att['score']; ?>/<?php echo $att['total']; ?> (<?php echo $att['percent']; ?>%)
+                    </div>
+                    <div class="text-muted-ink small"><i class="bi bi-calendar-check me-1"></i><?php echo date('M j, Y', strtotime((string)$att['completed_at'])); ?></div>
+                  <?php else: ?>
+                    <div class="text-muted-ink small"><i class="bi bi-dash-circle me-1"></i>Not Attempted</div>
+                  <?php endif; ?>
+                </td>
                 <td class="text-end pe-4">
-                  <a href="<?php echo url('/pages/quiz.php?id=' . urlencode($q['id'])); ?>" class="btn btn-sm bg-surface-2 border-ink-200 text-ink-800 fw-semibold transition-normal hover-bg-brand-50 shadow-xs text-nowrap">
-                    Take Quiz <i class="bi bi-arrow-right ms-1 text-brand"></i>
+                  <a href="<?php echo url('/pages/quiz.php?id=' . urlencode($q['id'])); ?>" class="btn btn-sm <?php echo $hasAttempt ? 'btn-outline-brand' : 'bg-surface-2 border-ink-200 text-ink-800 hover-bg-brand-50'; ?> fw-semibold transition-normal shadow-xs text-nowrap">
+                    <?php echo $hasAttempt ? 'Retake Quiz' : 'Take Quiz'; ?> <i class="bi bi-arrow-right ms-1 <?php echo $hasAttempt ? '' : 'text-brand'; ?>"></i>
                   </a>
                 </td>
               </tr>
