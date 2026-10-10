@@ -245,6 +245,33 @@ SYS;
             $recentAttempts = [];
         }
 
+        $recentMistakes = [];
+        if (!empty($recentAttempts)) {
+            $latest = $recentAttempts[0];
+            if (isset($latest['id'], $latest['quiz_id'])) {
+                try {
+                    $detail = $repo->loadDetailForAttempt($userId, $latest['id'], $latest['quiz_id'], $token);
+                    if ($detail) {
+                        foreach ($detail as $q) {
+                            if (isset($q['is_correct']) && !$q['is_correct']) {
+                                $qText = $q['question'] ?? 'Unknown question';
+                                $opts = $q['options'] ?? [];
+                                $userAnsIdx = $q['selected'] ?? -1;
+                                $corrAnsIdx = $q['correct'] ?? -1;
+                                
+                                $userAns = $userAnsIdx >= 0 && isset($opts[$userAnsIdx]) ? $opts[$userAnsIdx] : 'No answer/Unknown';
+                                $corrAns = $corrAnsIdx >= 0 && isset($opts[$corrAnsIdx]) ? $opts[$corrAnsIdx] : 'Unknown';
+                                
+                                $recentMistakes[] = "Q: $qText (Answered: $userAns | Correct: $corrAns)";
+                            }
+                        }
+                    }
+                } catch (Throwable $e) {
+                    // Ignore
+                }
+            }
+        }
+
         $profile = $_SESSION['user_profile_cache'] ?? null;
         if (!is_array($profile) || ($profile['id'] ?? '') !== $userId) {
             $profile = $auth->profile() ?: [];
@@ -253,7 +280,7 @@ SYS;
             }
         }
 
-        $context = self::formatGroundingSummary($conceptRows, $recentAttempts, $profile);
+        $context = self::formatGroundingSummary($conceptRows, $recentAttempts, $profile, $recentMistakes);
 
         $_SESSION['coach_context_cache'] = [
             'user_id' => $userId,
@@ -270,7 +297,8 @@ SYS;
     public static function formatGroundingSummary(
         array $conceptRows,
         array $recentAttempts,
-        array $profile
+        array $profile,
+        array $recentMistakes = []
     ): string {
         $totalRecent = count($recentAttempts);
         $scores = array_map(static fn($a) => (float) ($a['percent'] ?? 0), $recentAttempts);
@@ -306,6 +334,13 @@ SYS;
             'Developing concepts: ' . ($dev ? implode(', ', array_slice($dev, 0, 5)) : 'none recorded'),
             'Strong concepts: ' . ($strong ? implode(', ', array_slice($strong, 0, 5)) : 'none recorded'),
         ];
+
+        if (!empty($recentMistakes)) {
+            $lines[] = "Recent Quiz Mistakes:";
+            foreach (array_slice($recentMistakes, 0, 5) as $m) { // limit to 5 to save tokens
+                $lines[] = "- " . $m;
+            }
+        }
 
         $practice = !empty($weak) ? $weak[0] : (!empty($dev) ? $dev[0] : 'General');
         $lines[] = 'Recommended practice: ' . preg_replace('/\s*\(.*?\)/', '', $practice);

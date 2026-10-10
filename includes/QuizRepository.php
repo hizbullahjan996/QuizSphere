@@ -161,7 +161,7 @@ class QuizRepository
     public function listRecentAttemptScores(string $userId, ?string $token = null, int $limit = 5): array
     {
         return $this->db->select('quiz_attempts', [
-            'columns' => 'percent, score, total',
+            'columns' => 'id, quiz_id, percent, score, total',
             'filter'  => ['user_id' => "eq.$userId"],
             'order'   => 'completed_at.desc',
             'limit'   => $limit,
